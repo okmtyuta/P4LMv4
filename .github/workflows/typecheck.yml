@@ -1,0 +1,33 @@
+name: Typecheck
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ "**" ]
+
+permissions:
+  contents: read
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: '3.12'
+          cache: true
+
+      - name: Sync dependencies (frozen)
+        run: uv sync --frozen
+
+      - name: mypy
+        run: uv run mypy --config-file mypy.ini src
+

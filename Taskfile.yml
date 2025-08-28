@@ -1,0 +1,35 @@
+version: "3"
+
+tasks:
+  default:
+    desc: show commands
+    cmds:
+      - task -l --sort none
+
+  check:
+    desc: run typecheck, tests, format, lint
+    cmds:
+      - task typecheck
+      - task test
+      - task format
+      - task lint
+
+  format:
+    desc: format code
+    cmds:
+      - uv run ruff format src
+
+  lint:
+    desc: lint code
+    cmds:
+      - uv run ruff check --fix src
+
+  test:
+    desc: run tests
+    cmds:
+      - uv run pytest -q
+
+  typecheck:
+    desc: static type check
+    cmds:
+      - uv run mypy --config-file mypy.ini src

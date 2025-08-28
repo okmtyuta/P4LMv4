@@ -1,0 +1,32 @@
+[project]
+name = "p4lmv4"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fair-esm>=2.0.0",
+    "h5py>=3.14.0",
+    "matplotlib>=3.10.5",
+    "mypy>=1.17.1",
+    "numpy>=2.3.2",
+    "polars>=1.32.3",
+    "pytest>=8.4.1",
+    "ruff>=0.12.10",
+    "schedulefree>=1.4.1",
+    "scipy>=1.16.1",
+    "torch>=2.8.0",
+    "torchdiffeq>=0.2.5",
+    "tqdm>=4.67.1",
+]
+
+[tool.ruff.lint]
+select = ["F", "I"]
+ignore = ['E203']
+
+[tool.ruff]
+line-length = 120
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["src/tests"]
