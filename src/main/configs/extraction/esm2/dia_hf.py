@@ -4,12 +4,12 @@ dia_hfデータセットの特徴抽出設定
 """
 
 from src.main.extraction import ExtractionRunnerConfig
-from src.modules.dir.dir import Dir
+from src.modules.helper.helper import Helper
 
 # 設定: ESM2モデル、バッチサイズ32、並列処理あり
 dia_hf_config = ExtractionRunnerConfig(
-    csv_path=Dir.ROOT / "data" / "dia_hf" / "data.csv",
-    output_path=Dir.ROOT / "outputs" / "dia_hf" / "dia_hf_data_esm2.h5",
+    csv_path=Helper.ROOT / "data" / "dia_hf" / "data.csv",
+    output_path=Helper.ROOT / "outputs" / "dia_hf" / "dia_hf_data_esm2.h5",
     dataset_name="dia_hf_data_esm2",
     language_model="esm2",
     batch_size=32,

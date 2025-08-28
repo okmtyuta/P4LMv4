@@ -5,6 +5,8 @@ import importlib
 import inspect
 from typing import Any, ClassVar, Dict, Self, get_args, get_origin, get_type_hints
 
+from src.modules.container.sequence_container import SequenceContainer
+
 
 class SerializableObject:
     """Base class for objects that can be converted to/from dictionary representation.
@@ -114,6 +116,21 @@ class SerializableObject:
                     annotated_class_only=annotated_class_only,
                 ),
             }
+        # SequenceContainer (e.g., SerializableContainerList): wrap with type + data for round-trip
+        if isinstance(value, SequenceContainer):
+            return {
+                cls.nested_flag_key: True,
+                cls.nested_type_key: cls._type_to_string(type(value)),
+                cls.nested_data_key: [
+                    cls._deep_serialize(
+                        v,
+                        include_class_vars=include_class_vars,
+                        annotated_class_only=annotated_class_only,
+                    )
+                    for v in value
+                ],
+            }
+
         # Containers
         if isinstance(value, dict):
             return {
@@ -166,8 +183,16 @@ class SerializableObject:
             and cls.nested_data_key in value
         ):
             tp = cls._type_from_string(value[cls.nested_type_key])
+            # SerializableObject -> use from_dict
             if issubclass(tp, SerializableObject):
                 return tp.from_dict(value[cls.nested_data_key])
+            # SequenceContainer -> construct from decoded sequence
+            if issubclass(tp, SequenceContainer):
+                seq_raw = value[cls.nested_data_key]
+                if not isinstance(seq_raw, (list, tuple)):
+                    return seq_raw
+                seq = [cls._decode_untyped(v) for v in seq_raw]
+                return tp(seq)
         # Recurse containers
         if isinstance(value, dict):
             return {k: cls._decode_untyped(v) for k, v in value.items()}
@@ -197,7 +222,7 @@ class SerializableObject:
         origin = get_origin(hint)
         args = get_args(hint)
 
-        # Direct SerializableObject type
+        # Direct SerializableObject type (supports generic alias origin=None)
         try:
             if origin is None and isinstance(hint, type) and issubclass(hint, SerializableObject):
                 if isinstance(value, dict) and (value.get(cls.nested_flag_key) is True or cls.instance_key in value):
@@ -206,6 +231,33 @@ class SerializableObject:
                 # treat plain dicts as constructor data for that type.
                 if isinstance(value, dict):
                     return hint.from_dict(value)
+        except Exception:
+            pass
+
+        # SequenceContainer[T]-like types (either direct class or generic alias origin)
+        try:
+            container_cls = None
+            elem_hint = None
+            if origin is not None and isinstance(origin, type) and issubclass(origin, SequenceContainer):
+                container_cls = origin
+                elem_hint = args[0] if args else None
+            elif origin is None and isinstance(hint, type) and issubclass(hint, SequenceContainer):
+                container_cls = hint
+                elem_hint = None
+            if container_cls is not None:
+                # Wrapper case
+                if isinstance(value, dict) and value.get(cls.nested_flag_key) is True and cls.nested_data_key in value:
+                    seq_raw = value[cls.nested_data_key]
+                    if hasattr(seq_raw, "tolist"):
+                        seq_raw = seq_raw.tolist()
+                    seq = [cls._decode_by_hint(v, elem_hint) for v in (seq_raw or [])]
+                    return container_cls(seq)
+                # Plain list case
+                if hasattr(value, "tolist"):
+                    value = value.tolist()
+                if isinstance(value, list):
+                    seq = [cls._decode_by_hint(v, elem_hint) for v in value]
+                    return container_cls(seq)
         except Exception:
             pass
 

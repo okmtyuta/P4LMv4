@@ -1,4 +1,6 @@
-from typing import Iterable
+import random
+import secrets
+from typing import Iterable, Optional, Self
 
 import polars as pl
 
@@ -15,13 +17,13 @@ class ProteinList(SerializableContainerList[Protein]):
     Inherits all list-like operations from SequenceContainer and HDF5 I/O from HDF5IO.
     """
 
-    def __init__(self, proteins: Iterable[Protein]) -> None:
+    def __init__(self, iterable: Iterable[Protein]) -> None:
         """Initialize ProteinList with an iterable of Protein objects.
 
         Args:
-            proteins: Iterable of Protein objects
+            iterable: Iterable of Protein objects
         """
-        super().__init__(proteins)
+        super().__init__(iterable)
 
     @classmethod
     def from_csv(cls, path: str) -> "ProteinList":
@@ -46,8 +48,33 @@ class ProteinList(SerializableContainerList[Protein]):
             # All columns including seq go to props (except index)
             props: ProteinProps = {k: v for k, v in row.items() if k != "index"}
 
-            # Create Protein directly
+            # Create Protein Directly
             protein = Protein(key=key, props=props, representations=None, processed=None, predicted={})
             proteins.append(protein)
 
         return cls(proteins)
+
+    def shuffle(self, seed: Optional[int] = None) -> Self:
+        """要素順を破壊的にシャッフルする。
+
+        - インプレースで順序を変更します。
+        - `seed` が `None` の場合は内部でランダムに決定します（`secrets.randbits(64)`）。
+
+        Args:
+            seed: 乱数シード。`None` 可（未指定時は内部で自動決定）。
+
+        Returns:
+            self（メソッドチェーン可能）。
+        """
+        if seed is None:
+            seed = secrets.randbits(64)
+        rng = random.Random(seed)
+        rng.shuffle(self._data)
+
+        print("====")
+        print("====")
+        print("seed is", seed)
+        print("====")
+        print("====")
+
+        return self

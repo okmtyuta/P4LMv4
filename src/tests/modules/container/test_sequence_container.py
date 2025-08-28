@@ -447,6 +447,42 @@ class TestSplitOperations:
         with pytest.raises(ValueError):
             container.split_by_ratio([1, -1, 3])
 
+    def test_split_by_size_basic(self):
+        """固定個数で分割（100 を 30 で -> 30,30,30,10）。"""
+        data = list(range(100))
+        container = SequenceContainer(data)
+        parts = container.split_by_size(30)
+
+        sizes = [len(p) for p in parts]
+        assert sizes == [30, 30, 30, 10]
+        # join で元データに戻る
+        joined = SequenceContainer.join(parts)
+        assert joined.to_list() == data
+
+    def test_split_by_size_edge_cases(self):
+        """端数・過大サイズ・空・不正値の動作を確認。"""
+        # サイズが配列長を超える -> そのまま1分割
+        container = SequenceContainer(list(range(25)))
+        parts = container.split_by_size(100)
+        assert len(parts) == 1
+        assert list(parts[0]) == list(range(25))
+
+        # ちょうど割り切れる
+        container = SequenceContainer(list(range(9)))
+        parts = container.split_by_size(3)
+        assert [len(p) for p in parts] == [3, 3, 3]
+
+        # 空
+        empty = SequenceContainer[int]([])
+        parts = empty.split_by_size(10)
+        assert parts == []
+
+        # 不正サイズ
+        with pytest.raises(ValueError):
+            container.split_by_size(0)
+        with pytest.raises(ValueError):
+            container.split_by_size(-5)
+
 
 class TestEdgeCases:
     """エッジケースのテスト"""

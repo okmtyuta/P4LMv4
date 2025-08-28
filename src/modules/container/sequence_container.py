@@ -47,9 +47,21 @@ class SequenceContainer[T]:
         pass
 
     def __getitem__(self, key: int | slice) -> T | Self:
-        """Get item(s) at the specified index or slice."""
+        """Get item(s) at the specified index or slice.
+
+        スライス時はサブクラスの ``__init__`` を呼ばずに、
+        同型インスタンスをシャローコピーして ``_data`` だけ差し替える。
+        これにより、``Dataloader`` のように特殊な ``__init__``
+        （例: 設定オブジェクト必須）を持つサブクラスでも安全にスライス可能。
+        """
         if isinstance(key, slice):
-            return type(self)(self._data[key])
+            new = object.__new__(type(self))
+            # __dict__ を持つ場合はコピーしてメタ情報を引き継ぐ
+            if hasattr(self, "__dict__"):
+                new.__dict__ = self.__dict__.copy()  # type: ignore[attr-defined]
+            # _data のみスライス結果に置換
+            new._data = self._data[key]  # type: ignore[attr-defined]
+            return new
         return self._data[key]
 
     def __setitem__(self, key: int | slice, value: T | Iterable[T]) -> None:
@@ -156,6 +168,20 @@ class SequenceContainer[T]:
         """Return a copy of the internal list."""
         return self._data.copy()
 
+    def replace(self, iterable: Iterable[T]) -> Self:
+        """内部データ ``_data`` を与えられた反復可能オブジェクトで置き換えて self を返す。
+
+        - 新しい ``list`` を生成して差し替えるため、元の ``_data`` 参照には影響しません。
+
+        Args:
+            iterable: 新しい要素列。
+
+        Returns:
+            Self: メソッドチェーン可能な自身。
+        """
+        self._data = list(iterable)
+        return self
+
     # === Advanced Operations ===
     def filter(self, predicate: Callable[[T], bool]) -> Self:
         """Return a new container with elements that satisfy the predicate."""
@@ -240,6 +266,33 @@ class SequenceContainer[T]:
             start = end
 
         return result
+
+    def split_by_size(self, size: int) -> list[Self]:
+        """Split the container into chunks with at most `size` items each.
+
+        - 例えば要素数 100 を `size=30` で分割すると、サイズは [30, 30, 30, 10] となります。
+
+        Args:
+            size: 各分割片の最大要素数（正の整数）。
+
+        Returns:
+            同型のコンテナのリスト。
+
+        Raises:
+            ValueError: `size` が正でない場合。
+        """
+        if size <= 0:
+            raise ValueError("size must be positive")
+
+        n = len(self._data)
+        if n == 0:
+            return []
+
+        out: list[Self] = []
+        for start in range(0, n, size):
+            end = min(start + size, n)
+            out.append(type(self)(self._data[start:end]))
+        return out
 
     @classmethod
     def join(cls, containers: list[Self]) -> Self:
