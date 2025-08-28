@@ -12,6 +12,10 @@ class Aggregator(DataProcess):
     def __init__(self, method: AggregateMethod) -> None:
         self._method: AggregateMethod = method
 
+    @property
+    def dim_factor(self) -> int:
+        return 1
+
     def _act(self, protein: Protein) -> Protein:
         if self._method == "mean":
             processed = protein.get_processed()

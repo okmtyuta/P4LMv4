@@ -24,6 +24,10 @@ class _BaseSinusoidalPositionalEncoder(DataProcess):
         self._gamma = gamma
         self._cache = SinusoidalPositionalEncoderCache()
 
+    @property
+    def dim_factor(self) -> int:
+        return 1
+
     # ベクトル化された位置エンコード行列の生成
     def _positional_tensor(self, length: int, dim: int, reversed: bool = False) -> torch.Tensor:
         cached = self._cache.read(length=length, dim=dim, reversed=reversed)
@@ -63,7 +67,7 @@ class _BaseSinusoidalPositionalEncoder(DataProcess):
 
 class SinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
     def _act(self, protein: Protein) -> Protein:
-        reps = protein.get_representations()
+        reps = protein.get_processed()
         L, D = reps.shape
         pos = self._positional_tensor(length=L, dim=D, reversed=False)
         out = reps * pos
@@ -72,7 +76,7 @@ class SinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
 
 class ReversedSinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
     def _act(self, protein: Protein) -> Protein:
-        reps = protein.get_representations()
+        reps = protein.get_processed()
         L, D = reps.shape
         pos = self._positional_tensor(length=L, dim=D, reversed=True)
         out = reps * pos
@@ -80,13 +84,17 @@ class ReversedSinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
 
 
 class BidirectionalSinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
+    @property
+    def dim_factor(self) -> int:  # 2D へ拡張
+        return 2
+
     def __init__(self, a: float, b: float, gamma: float) -> None:
         super().__init__(a=a, b=b, gamma=gamma)
         self._normal = SinusoidalPositionalEncoder(a=a, b=b, gamma=gamma)
         self._reversed = ReversedSinusoidalPositionalEncoder(a=a, b=b, gamma=gamma)
 
     def _act(self, protein: Protein) -> Protein:
-        reps = protein.get_representations()
+        reps = protein.get_processed()
         L, D = reps.shape
         pos_normal = self._positional_tensor(length=L, dim=D, reversed=False)
         pos_reversed = self._positional_tensor(length=L, dim=D, reversed=True)

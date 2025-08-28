@@ -3,7 +3,7 @@
 
 import torch
 
-from src.modules.data_process.rope_positional_encoder import (
+from src.modules.data_process.positional_encoder.rope_positional_encoder import (
     BidirectionalRoPEPositionalEncoder,
     ReversedRoPEPositionalEncoder,
     RoPEPositionalEncoder,
@@ -42,6 +42,7 @@ class TestRoPE:
         reps = torch.randn((L, D), dtype=torch.float32)
 
         p = Protein(key="p1", props={"seq": "AAAAAA"}, representations=reps.clone())
+        p.set_processed(reps.clone())
         plist = ProteinList([p])
 
         # normal
@@ -51,9 +52,12 @@ class TestRoPE:
         want = _expected_rope(reps, theta_base=theta, reversed=False)
         assert torch.allclose(got, want, atol=1e-6)
 
-        # reversed
+        # reversed（元の表現に対して検証するため、新しい ProteinList を用意）
+        p_r = Protein(key="p1r", props={"seq": "AAAAAA"}, representations=reps.clone())
+        p_r.set_processed(reps.clone())
+        plist_r = ProteinList([p_r])
         enc_r = ReversedRoPEPositionalEncoder(theta_base=theta)
-        out_list_r = enc_r(plist)
+        out_list_r = enc_r(plist_r)
         got_r = out_list_r[0].get_processed()
         want_r = _expected_rope(reps, theta_base=theta, reversed=True)
         assert torch.allclose(got_r, want_r, atol=1e-6)
@@ -64,6 +68,7 @@ class TestRoPE:
         reps = torch.randn((L, D), dtype=torch.float32)
 
         p = Protein(key="p1", props={"seq": "AAAA"}, representations=reps.clone())
+        p.set_processed(reps.clone())
         plist = ProteinList([p])
 
         enc = RoPEPositionalEncoder(theta_base=theta)
@@ -79,6 +84,7 @@ class TestRoPE:
         reps = torch.randn((L, D), dtype=torch.float32)
 
         p = Protein(key="p1", props={"seq": "AAAA"}, representations=reps.clone())
+        p.set_processed(reps.clone())
         plist = ProteinList([p])
 
         enc_bi = BidirectionalRoPEPositionalEncoder(theta_base=theta)

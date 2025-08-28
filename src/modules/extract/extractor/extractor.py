@@ -64,10 +64,11 @@ class Extractor:
 
             # 進行状況表示付きで結果を取得
             processed_batches = []
-            for future in tqdm(
-                as_completed(future_to_batch), total=len(protein_lists), desc="Processing batches (process)"
-            ):
-                processed_batch = future.result()
-                processed_batches.append(processed_batch)
+            with tqdm(total=len(protein_lists), desc="Processing batches (process)", mininterval=0) as pbar:
+                for future in as_completed(future_to_batch):
+                    processed_batch = future.result()
+                    processed_batches.append(processed_batch)
+                    pbar.update(1)
+                    pbar.refresh()  # force flush
 
         return ProteinList.join(processed_batches)

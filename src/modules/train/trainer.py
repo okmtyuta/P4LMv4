@@ -10,7 +10,7 @@ from src.modules.train.train_result import EpochPhaseResult, EpochSummary
 
 
 class Trainer:
-    def __init__(self, model: Model, dataloader: Dataloader):
+    def __init__(self, model: Model, dataloader: Dataloader, optimizer: RAdamScheduleFree):
         self._model = model
 
         self._dataloader = dataloader
@@ -19,7 +19,7 @@ class Trainer:
         )
 
         self._model.train()
-        self._optimizer = RAdamScheduleFree(self._model.parameters(), lr=1e-3)
+        self._optimizer = optimizer
         self._optimizer.train()
 
         self._recorder = TrainRecorder()

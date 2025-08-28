@@ -75,6 +75,9 @@ class Dataloader:
         self._config = config
         self._batches: Optional[list[DataBatch]] = None
 
+    def __len__(self) -> int:
+        return len(self.batches)
+
     @property
     def input_props(self):
         return self._config.input_props
@@ -89,6 +92,18 @@ class Dataloader:
             self._batches = self._generate_batches()
 
         return self._batches
+
+    def __iter__(self):
+        return iter(self.batches)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            new = object.__new__(type(self))
+            new.__dict__ = self.__dict__.copy()
+            # 実体化したバッチをスライス（必要に応じて生成）
+            new._batches = self.batches[key]
+            return new
+        return self.batches[key]
 
     def _generate_batches(self) -> list[DataBatch]:
         protein_lists: list[ProteinList] = self._config.protein_list.split_by_size(self._config.batch_size)
@@ -111,3 +126,9 @@ class Dataloader:
             cfg = self._config.with_protein_list(plist)
             loaders.append(Dataloader(cfg))
         return loaders
+
+    def output_dim(self, input_dim: int) -> int:
+        processed_dim = self._config.process_list.output_dim(input_dim=input_dim)
+        input_props_dim = len(self._config.input_props)
+
+        return processed_dim + input_props_dim

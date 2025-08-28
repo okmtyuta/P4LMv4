@@ -42,6 +42,8 @@ class Protein(SerializableContainer):
         self.processed = processed
         self.predicted = predicted if predicted is not None else {}
 
+    # Note: `representations` はパブリック属性として保持（テスト仕様に合わせる）
+
     @property
     def seq(self) -> str:
         value = self.props.get("seq")

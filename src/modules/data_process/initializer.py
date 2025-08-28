@@ -3,5 +3,10 @@ from src.modules.protein.protein import Protein
 
 
 class Initializer(DataProcess):
+    @property
+    def dim_factor(self) -> int:
+        return 1
+
     def _act(self, protein: Protein):
-        return protein.set_processed(processed=protein.representations)
+        reps = protein.get_representations()
+        return protein.set_processed(processed=reps)

@@ -18,6 +18,7 @@ class TestBasicBehavior:
         """1つの Protein に対して平均集約され、processed に保存されること。"""
         reps = torch.tensor([[1.0, 2.0], [3.0, 6.0], [5.0, 4.0]])
         protein = Protein(key="k1", props={"seq": "AAA"}, representations=reps)
+        protein.set_processed(reps)
         plist = ProteinList([protein])
 
         agg = Aggregator("mean")
@@ -32,7 +33,9 @@ class TestBasicBehavior:
         reps1 = torch.tensor([[1.0, 2.0], [3.0, 6.0]])
         reps2 = torch.tensor([[2.0, 0.0], [4.0, 4.0], [6.0, 2.0]])
         p1 = Protein(key="p1", props={"seq": "AAA"}, representations=reps1)
+        p1.set_processed(reps1)
         p2 = Protein(key="p2", props={"seq": "BBB"}, representations=reps2)
+        p2.set_processed(reps2)
         plist = ProteinList([p1, p2])
 
         agg = Aggregator("mean")

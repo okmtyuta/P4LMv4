@@ -14,4 +14,5 @@ arabidopsis_config = ExtractionRunnerConfig(
     language_model="esm2",
     batch_size=32,
     parallel=True,
+    max_workers=3,
 )

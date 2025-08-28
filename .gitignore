@@ -12,6 +12,7 @@ wheels/
 
 # result
 *.h5
+outputs
 
 # data
 *.csv
@@ -21,3 +22,6 @@ data
 .mypy_cache
 .ruff_cache
 .pytest_cache
+
+# log
+*.log

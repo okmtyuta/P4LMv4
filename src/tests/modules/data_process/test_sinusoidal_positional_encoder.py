@@ -3,7 +3,7 @@
 
 import torch
 
-from src.modules.data_process.sinusoidal_positional_encoder import (
+from src.modules.data_process.positional_encoder.sinusoidal_positional_encoder import (
     BidirectionalSinusoidalPositionalEncoder,
     ReversedSinusoidalPositionalEncoder,
     SinusoidalPositionalEncoder,
@@ -36,6 +36,7 @@ class TestSinusoidalPositionalEncoder:
         reps = torch.ones((L, D), dtype=torch.float32)
 
         p = Protein(key="p1", props={"seq": "AAAA"}, representations=reps)
+        p.set_processed(reps)
         plist = ProteinList([p])
 
         # normal
@@ -45,9 +46,12 @@ class TestSinusoidalPositionalEncoder:
         expected = _expected_pos(a=a, b=b, gamma=gamma, L=L, D=D, reversed=False)
         assert torch.allclose(out, expected, atol=1e-6)
 
-        # reversed
+        # reversed（元の表現に対して検証するため、新しい ProteinList を用意）
+        p_rev = Protein(key="p1r", props={"seq": "AAAA"}, representations=reps)
+        p_rev.set_processed(reps)
+        plist_rev = ProteinList([p_rev])
         enc_rev = ReversedSinusoidalPositionalEncoder(a=a, b=b, gamma=gamma)
-        out_list_rev = enc_rev(plist)
+        out_list_rev = enc_rev(plist_rev)
         out_rev = out_list_rev[0].get_processed()
         expected_rev = _expected_pos(a=a, b=b, gamma=gamma, L=L, D=D, reversed=True)
         assert torch.allclose(out_rev, expected_rev, atol=1e-6)
@@ -58,6 +62,7 @@ class TestSinusoidalPositionalEncoder:
         reps = torch.ones((L, D), dtype=torch.float32)
 
         p = Protein(key="p1", props={"seq": "AAAA"}, representations=reps)
+        p.set_processed(reps)
         plist = ProteinList([p])
 
         enc_bi = BidirectionalSinusoidalPositionalEncoder(a=a, b=b, gamma=gamma)

@@ -36,6 +36,10 @@ class _BaseRoPEPositionalEncoder(DataProcess):
         self._theta_base = float(theta_base)
         self._cache = RoPEAnglesCache()
 
+    @property
+    def dim_factor(self) -> int:
+        return 1
+
     def _positions(self, length: int, reversed: bool) -> torch.Tensor:
         if reversed:
             return torch.arange(length, 0, -1, dtype=torch.float32)
@@ -102,19 +106,23 @@ class _BaseRoPEPositionalEncoder(DataProcess):
 
 class RoPEPositionalEncoder(_BaseRoPEPositionalEncoder):
     def _act(self, protein: Protein) -> Protein:
-        reps = protein.get_representations()
+        reps = protein.get_processed()
         out = self._apply_rope(reps, False)
         return protein.set_processed(processed=out)
 
 
 class ReversedRoPEPositionalEncoder(_BaseRoPEPositionalEncoder):
     def _act(self, protein: Protein) -> Protein:
-        reps = protein.get_representations()
+        reps = protein.get_processed()
         out = self._apply_rope(reps, True)
         return protein.set_processed(processed=out)
 
 
 class BidirectionalRoPEPositionalEncoder(_BaseRoPEPositionalEncoder):
+    @property
+    def dim_factor(self) -> int:  # 2D へ拡張
+        return 2
+
     def _act(self, protein: Protein) -> Protein:
         reps = protein.get_representations()
         out_normal = self._apply_rope(reps, False)

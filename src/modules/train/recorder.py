@@ -13,7 +13,7 @@ class TrainRecorder:
     - 早期停止の判定は「最良エポックからの経過エポック数 < patience」で継続
     """
 
-    def __init__(self, patience: int = 300) -> None:
+    def __init__(self, patience: int = 50) -> None:
         self._current_epoch: int = 1
         self._patience: int = patience
 

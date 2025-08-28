@@ -5,6 +5,7 @@ import torch
 
 from src.modules.data_process.aggregator import Aggregator
 from src.modules.data_process.data_process_list import DataProcessList
+from src.modules.data_process.initializer import Initializer
 from src.modules.dataloader.dataloader import DataBatch, DataloaderConfig
 from src.modules.protein.protein import Protein
 from src.modules.protein.protein_list import ProteinList
@@ -32,7 +33,7 @@ class TestDataBatch:
             output_props=["label1"],
             batch_size=8,
             cacheable=True,
-            process_list=DataProcessList([Aggregator("mean")]),
+            process_list=DataProcessList([Initializer(), Aggregator("mean")]),
         )
 
         batch = DataBatch(config=config)
@@ -65,7 +66,7 @@ class TestDataBatch:
             output_props=["label1"],
             batch_size=16,
             cacheable=False,
-            process_list=DataProcessList([Aggregator("mean")]),
+            process_list=DataProcessList([Initializer(), Aggregator("mean")]),
         )
 
         batch = DataBatch(config=config)

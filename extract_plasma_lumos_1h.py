@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-plasma_lumos_1hデータセットの特徴抽出スクリプト
+arabidopsisデータセットの特徴抽出スクリプト
 
-このスクリプトはManagerを使用してplasma_lumos_1hデータセットに対して
+このスクリプトはManagerを使用してarabidopsisデータセットに対して
 ESM2とESM1bモデルでの特徴抽出を実行します。
 """
 
 import logging
 
-from src.main.configs.extraction.esm1b.plasma_lumos_1h import plasma_lumos_1h_config as esm1b_config
-from src.main.configs.extraction.esm2.plasma_lumos_1h import plasma_lumos_1h_config as esm2_config
+from src.main.configs.extraction.esm1b.arabidopsis import arabidopsis_config as esm1b_config
+from src.main.configs.extraction.esm2.arabidopsis import arabidopsis_config as esm2_config
 from src.main.utils.manager import Manager
 
 
@@ -18,7 +18,7 @@ def setup_logging():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.FileHandler("plasma_lumos_1h_extraction.log"), logging.StreamHandler()],
+        handlers=[logging.FileHandler("arabidopsis_extraction.log"), logging.StreamHandler()],
     )
 
 
@@ -28,11 +28,11 @@ def main():
     setup_logging()
     logger = logging.getLogger(__name__)
 
-    logger.info("=== plasma_lumos_1h特徴抽出スクリプト開始 ===")
+    logger.info("=== arabidopsis特徴抽出スクリプト開始 ===")
 
     try:
         # 両方のモデル設定を使用
-        configs = [esm2_config, esm1b_config]
+        configs = [esm2_config]
         logger.info(f"{len(configs)}個の抽出設定を準備しました")
 
         # Managerで実行
@@ -59,7 +59,7 @@ def main():
             for i, result in enumerate(manager.get_results(), 1):
                 logger.info(f"結果{i}: {len(result)}個のタンパク質を処理")
 
-        logger.info("=== plasma_lumos_1h特徴抽出スクリプト完了 ===")
+        logger.info("=== arabidopsis特徴抽出スクリプト完了 ===")
 
         return successful_count > 0
 
