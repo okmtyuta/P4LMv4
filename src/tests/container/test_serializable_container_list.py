@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SerializableStorageList の機能テスト
+SerializableContainerList の機能テスト
 """
 
 import tempfile
@@ -11,12 +11,12 @@ import h5py
 import pytest
 
 from src.modules.container.hdf5_io import HDF5IO
-from src.modules.container.serializable_storage import SerializableStorage
-from src.modules.container.serializable_storage_list import SerializableStorageList
+from src.modules.container.serializable_container import SerializableContainer
+from src.modules.container.serializable_container_list import SerializableContainerList
 
 
 @dataclass
-class SimpleTestData(SerializableStorage):
+class SimpleTestData(SerializableContainer):
     """テスト用の単純なデータクラス"""
 
     name: str
@@ -24,7 +24,7 @@ class SimpleTestData(SerializableStorage):
 
 
 @dataclass
-class ComplexTestData(SerializableStorage):
+class ComplexTestData(SerializableContainer):
     """テスト用の複雑なデータクラス"""
 
     title: str
@@ -39,7 +39,7 @@ class TestBasicFunctionality:
         """継承関係の確認"""
         data1 = SimpleTestData("test1", 42)
         data2 = SimpleTestData("test2", 84)
-        storage_list = SerializableStorageList([data1, data2])
+        storage_list = SerializableContainerList([data1, data2])
 
         assert isinstance(storage_list, HDF5IO)
         assert len(storage_list) == 2
@@ -48,7 +48,7 @@ class TestBasicFunctionality:
 
     def test_empty_list(self):
         """空リストのテスト"""
-        empty_list = SerializableStorageList([])
+        empty_list = SerializableContainerList([])
         assert len(empty_list) == 0
         assert empty_list.is_empty
 
@@ -60,7 +60,7 @@ class TestHDF5Functionality:
         """基本的なHDF5書き込み"""
         data1 = SimpleTestData("item1", 100)
         data2 = SimpleTestData("item2", 200)
-        storage_list = SerializableStorageList([data1, data2])
+        storage_list = SerializableContainerList([data1, data2])
 
         with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
             tmp_path = Path(tmp.name)
@@ -71,7 +71,7 @@ class TestHDF5Functionality:
                 assert returned_group is f
 
                 # メタデータの確認
-                assert f.attrs["__TYPE__"] == "SerializableStorageList"
+                assert f.attrs["__TYPE__"] == "SerializableContainerList"
                 assert f.attrs["__LENGTH__"] == 2
 
                 # 要素の存在確認
@@ -87,7 +87,7 @@ class TestHDF5Functionality:
     def test_from_hdf5_group_basic(self):
         """基本的なHDF5読み込み"""
         original_data = [SimpleTestData("original1", 300), SimpleTestData("original2", 400)]
-        original_list = SerializableStorageList(original_data)
+        original_list = SerializableContainerList(original_data)
 
         with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
             tmp_path = Path(tmp.name)
@@ -99,7 +99,7 @@ class TestHDF5Functionality:
 
             # 読み込み
             with h5py.File(tmp_path, "r") as f:
-                restored_list = SerializableStorageList.from_hdf5_group(f)
+                restored_list = SerializableContainerList.from_hdf5_group(f)
 
             # 検証
             assert len(restored_list) == 2
@@ -116,7 +116,7 @@ class TestHDF5Functionality:
             ComplexTestData("first", [1, 2, 3], {"key1": "value1"}),
             ComplexTestData("second", [4, 5, 6], {"key2": "value2", "key3": "value3"}),
         ]
-        original_list = SerializableStorageList(original_data)
+        original_list = SerializableContainerList(original_data)
 
         with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
             tmp_path = Path(tmp.name)
@@ -128,7 +128,7 @@ class TestHDF5Functionality:
 
             # 読み込み
             with h5py.File(tmp_path, "r") as f:
-                restored_list = SerializableStorageList.from_hdf5_group(f)
+                restored_list = SerializableContainerList.from_hdf5_group(f)
 
             # 検証
             assert len(restored_list) == 2
@@ -148,7 +148,7 @@ class TestHDF5Functionality:
     def test_mixed_types_list(self):
         """異なる型の混合リストテスト"""
         mixed_data = [SimpleTestData("simple", 100), ComplexTestData("complex", [7, 8, 9], {"mixed": "true"})]
-        mixed_list = SerializableStorageList(mixed_data)
+        mixed_list = SerializableContainerList(mixed_data)
 
         with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
             tmp_path = Path(tmp.name)
@@ -160,7 +160,7 @@ class TestHDF5Functionality:
 
             # 読み込み
             with h5py.File(tmp_path, "r") as f:
-                restored_list = SerializableStorageList.from_hdf5_group(f)
+                restored_list = SerializableContainerList.from_hdf5_group(f)
 
             # 検証
             assert len(restored_list) == 2
@@ -182,7 +182,7 @@ class TestFileMethods:
     def test_save_and_load_from_hdf5(self):
         """save_as_hdf5とload_from_hdf5のテスト"""
         original_data = [SimpleTestData("file_test1", 500), SimpleTestData("file_test2", 600)]
-        original_list = SerializableStorageList(original_data)
+        original_list = SerializableContainerList(original_data)
 
         with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
             tmp_path = Path(tmp.name)
@@ -192,7 +192,7 @@ class TestFileMethods:
             original_list.save_as_hdf5(str(tmp_path))
 
             # ファイルから読み込み
-            loaded_list = SerializableStorageList.load_from_hdf5(str(tmp_path))
+            loaded_list = SerializableContainerList.load_from_hdf5(str(tmp_path))
 
             # 検証
             assert len(loaded_list) == 2
@@ -209,7 +209,7 @@ class TestEdgeCases:
 
     def test_empty_list_serialization(self):
         """空リストのシリアライゼーション"""
-        empty_list = SerializableStorageList([])
+        empty_list = SerializableContainerList([])
 
         with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
             tmp_path = Path(tmp.name)
@@ -221,7 +221,7 @@ class TestEdgeCases:
 
             # 読み込み
             with h5py.File(tmp_path, "r") as f:
-                restored_list = SerializableStorageList.from_hdf5_group(f)
+                restored_list = SerializableContainerList.from_hdf5_group(f)
 
             # 検証
             assert len(restored_list) == 0
@@ -231,7 +231,7 @@ class TestEdgeCases:
 
     def test_single_item_list(self):
         """単一要素リストのテスト"""
-        single_item = SerializableStorageList([SimpleTestData("single", 777)])
+        single_item = SerializableContainerList([SimpleTestData("single", 777)])
 
         with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
             tmp_path = Path(tmp.name)
@@ -243,7 +243,7 @@ class TestEdgeCases:
 
             # 読み込み
             with h5py.File(tmp_path, "r") as f:
-                restored_list = SerializableStorageList.from_hdf5_group(f)
+                restored_list = SerializableContainerList.from_hdf5_group(f)
 
             # 検証
             assert len(restored_list) == 1
@@ -263,7 +263,7 @@ class TestErrorHandling:
             def __init__(self, value):
                 self.value = value
 
-        invalid_list = SerializableStorageList([NonHDF5IOClass("invalid")])
+        invalid_list = SerializableContainerList([NonHDF5IOClass("invalid")])
 
         with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
             tmp_path = Path(tmp.name)
@@ -288,7 +288,7 @@ class TestErrorHandling:
 
             # 読み込み時にエラーが発生することを確認
             with h5py.File(tmp_path, "r") as f:
-                with pytest.raises(TypeError, match="does not contain SerializableStorageList data"):
-                    SerializableStorageList.from_hdf5_group(f)
+                with pytest.raises(TypeError, match="does not contain SerializableContainerList data"):
+                    SerializableContainerList.from_hdf5_group(f)
         finally:
             tmp_path.unlink()

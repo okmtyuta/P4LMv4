@@ -2,11 +2,11 @@ from typing import Optional, Union
 
 import torch
 
-from src.modules.container.serializable_storage import SerializableStorage
+from src.modules.container.serializable_container import SerializableContainer
 from src.modules.protein.protein_types import ProteinProps
 
 
-class Protein(SerializableStorage):
+class Protein(SerializableContainer):
     """Protein class that handles protein data with sequence, properties, and representations.
 
     This class manages protein information including:
@@ -16,7 +16,7 @@ class Protein(SerializableStorage):
     - Optional processed tensor data (representations with positional encoding and aggregation)
     - Optional predicted properties
 
-    It inherits from SerializableStorage to support both dictionary and HDF5 serialization.
+    It inherits from SerializableContainer to support both dictionary and HDF5 serialization.
     """
 
     def __init__(

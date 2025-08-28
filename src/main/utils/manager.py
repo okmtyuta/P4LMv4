@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, List, Type
 
 from src.main.extraction import ExtractionRunner, ExtractionRunnerConfig
-from src.modules.runner.runner import Runner, RunnerConfig
+from src.main.utils.runner import Runner, RunnerConfig
 
 logger = logging.getLogger(__name__)
 

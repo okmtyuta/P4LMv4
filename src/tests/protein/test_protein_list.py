@@ -237,7 +237,7 @@ class TestHdf5Functionality:
                 os.unlink(temp_h5_path)
 
     def test_hdf5_group_names(self):
-        """HDF5グループ名のテスト（SerializableStorageListではインデックス番号が使用される）"""
+        """HDF5グループ名のテスト（SerializableContainerListではインデックス番号が使用される）"""
         # 特定のキーを持つProteinを作成
         proteins = []
         keys = ["protein_a", "protein_b", "test_123"]
@@ -259,7 +259,7 @@ class TestHdf5Functionality:
             # HDF5ファイルの構造を直接確認
             with h5py.File(temp_h5_path, "r") as f:
                 group_names = list(f.keys())
-                # SerializableStorageListは要素をインデックス番号（"0", "1", "2"）で保存
+                # SerializableContainerListは要素をインデックス番号（"0", "1", "2"）で保存
                 expected_indices = [str(i) for i in range(len(keys))]
                 assert set(group_names) == set(expected_indices)
 

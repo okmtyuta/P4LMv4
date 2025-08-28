@@ -225,8 +225,8 @@ class TestMethodChaining:
         assert protein.predicted == predicted
 
 
-class TestSerializableStorage:
-    """SerializableStorage継承のテスト"""
+class TestSerializableContainer:
+    """SerializableContainer継承のテスト"""
 
     def test_to_dict_basic(self):
         """基本的な辞書変換テスト"""

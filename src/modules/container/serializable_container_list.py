@@ -6,7 +6,7 @@ from src.modules.container.hdf5_io import HDF5IO
 from src.modules.container.sequence_container import SequenceContainer
 
 
-class SerializableStorageList[T](SequenceContainer[T], HDF5IO):
+class SerializableContainerList[T](SequenceContainer[T], HDF5IO):
     """A sequence container that can be serialized to HDF5 format.
 
     This class assumes that all elements implement the HDF5IO interface.
@@ -22,7 +22,7 @@ class SerializableStorageList[T](SequenceContainer[T], HDF5IO):
             The HDF5 group that was written to.
         """
         # Store metadata
-        group.attrs["__TYPE__"] = "SerializableStorageList"
+        group.attrs["__TYPE__"] = "SerializableContainerList"
         group.attrs["__LENGTH__"] = len(self._data)
 
         # Store each element
@@ -50,8 +50,8 @@ class SerializableStorageList[T](SequenceContainer[T], HDF5IO):
             New instance of this class restored from HDF5 data.
         """
         # Check if this is the correct type
-        if group.attrs.get("__TYPE__") != "SerializableStorageList":
-            raise TypeError("Group does not contain SerializableStorageList data")
+        if group.attrs.get("__TYPE__") != "SerializableContainerList":
+            raise TypeError("Group does not contain SerializableContainerList data")
 
         length = int(group.attrs.get("__LENGTH__", 0))
         items = []

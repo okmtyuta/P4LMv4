@@ -8,7 +8,7 @@ import torch
 from src.modules.container.hdf5_io import HDF5IO
 
 
-class Hdf5Storage(HDF5IO):
+class Hdf5Container(HDF5IO):
     """Serialize/deserialize Python dict structures to/from h5py.Group.
 
     Attributes and markers used:
@@ -25,7 +25,7 @@ class Hdf5Storage(HDF5IO):
         """Initialize with a source dict to be written or held.
 
         - For writing: call instance method to_hdf5_group(group) to persist this source.
-        - For reading: use Hdf5Storage.from_hdf5_group(group) which returns an instance whose
+        - For reading: use Hdf5Container.from_hdf5_group(group) which returns an instance whose
           _source holds the reconstructed dict.
         """
         # Take a shallow copy to snapshot current content
@@ -206,7 +206,7 @@ class Hdf5Storage(HDF5IO):
         """Read from group and return a new instance with the loaded data."""
         source = cls._group_to_python(group)
         if not isinstance(source, dict):
-            raise TypeError("Top-level object must be a dict to initialize Hdf5Storage")
+            raise TypeError("Top-level object must be a dict to initialize Hdf5Container")
         return cls(source)
 
     def save_as_hdf5(self, file_path: str) -> None:

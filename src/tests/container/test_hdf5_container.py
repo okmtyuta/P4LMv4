@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Hdf5Storage の機能軸テスト
+Hdf5Container の機能軸テスト
 """
 
 import tempfile
@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 import torch
 
-from src.modules.container.hdf5_storage import Hdf5Storage
+from src.modules.container.hdf5_container import Hdf5Container
 
 
 class TestSerialization:
@@ -33,7 +33,7 @@ class TestSerialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(data)
+                interface = Hdf5Container(data)
                 interface.to_hdf5_group(f)
 
             # ファイルが正しく作成されたことを確認
@@ -63,7 +63,7 @@ class TestSerialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(data)
+                interface = Hdf5Container(data)
                 interface.to_hdf5_group(f)
 
             # 配列の形状と内容を確認
@@ -89,7 +89,7 @@ class TestSerialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(data)
+                interface = Hdf5Container(data)
                 interface.to_hdf5_group(f)
 
             # テンソルマーカーと型情報を確認
@@ -116,7 +116,7 @@ class TestSerialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(data)
+                interface = Hdf5Container(data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
@@ -152,7 +152,7 @@ class TestSerialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(data)
+                interface = Hdf5Container(data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
@@ -186,7 +186,7 @@ class TestSerialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(data)
+                interface = Hdf5Container(data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
@@ -218,12 +218,12 @@ class TestDeserialization:
         try:
             # 書き込み
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(original_data)
+                interface = Hdf5Container(original_data)
                 interface.to_hdf5_group(f)
 
             # 読み込み
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             assert restored_data["integer"] == 42
@@ -247,11 +247,11 @@ class TestDeserialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(original_data)
+                interface = Hdf5Container(original_data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             np.testing.assert_array_equal(restored_data["int_array"], [1, 2, 3, 4, 5])
@@ -273,11 +273,11 @@ class TestDeserialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(original_data)
+                interface = Hdf5Container(original_data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             # PyTorchテンソルとして復元されることを確認
@@ -303,11 +303,11 @@ class TestDeserialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(original_data)
+                interface = Hdf5Container(original_data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             assert restored_data["empty_list"] == []
@@ -333,11 +333,11 @@ class TestDeserialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(original_data)
+                interface = Hdf5Container(original_data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             assert restored_data["single_bytes"] == b"hello world"
@@ -363,11 +363,11 @@ class TestDeserialization:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(original_data)
+                interface = Hdf5Container(original_data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             assert restored_data["level1"]["level2"]["level3"]["deep_value"] == 42
@@ -397,11 +397,11 @@ class TestRoundtrip:
         try:
             # 往復変換
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(original_data)
+                interface = Hdf5Container(original_data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             assert restored_data["int"] == original_data["int"]
@@ -435,11 +435,11 @@ class TestRoundtrip:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(original_data)
+                interface = Hdf5Container(original_data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             # NumPy配列
@@ -482,11 +482,11 @@ class TestRoundtrip:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(original_data)
+                interface = Hdf5Container(original_data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             # 大きな配列の形状とデータ型を確認
@@ -515,7 +515,7 @@ class TestEdgeCases:
                 tmp_path = Path(tmp.name)
             try:
                 with h5py.File(tmp_path, "w") as f:
-                    interface = Hdf5Storage(data)
+                    interface = Hdf5Container(data)
                     interface.to_hdf5_group(f)
             finally:
                 tmp_path.unlink()
@@ -534,7 +534,7 @@ class TestEdgeCases:
                 tmp_path = Path(tmp.name)
             try:
                 with h5py.File(tmp_path, "w") as f:
-                    interface = Hdf5Storage(data)
+                    interface = Hdf5Container(data)
                     interface.to_hdf5_group(f)
             finally:
                 tmp_path.unlink()
@@ -548,11 +548,11 @@ class TestEdgeCases:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(empty_data)
+                interface = Hdf5Container(empty_data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             assert restored_data == {}
@@ -578,11 +578,11 @@ class TestEdgeCases:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(extreme_data)
+                interface = Hdf5Container(extreme_data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             assert restored_data["very_large_int"] == 2**63 - 1
@@ -613,11 +613,11 @@ class TestEdgeCases:
 
         try:
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(data)
+                interface = Hdf5Container(data)
                 interface.to_hdf5_group(f)
 
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             # 基本的な値の確認（型は完全に保持されない場合もあるが、値は保持される）
@@ -644,7 +644,7 @@ class TestEdgeCases:
             with h5py.File(tmp_path, "r") as f:
                 # 実際の動作を確認（エラーが発生するかどうか）
                 try:
-                    result = Hdf5Storage.from_hdf5_group(f)
+                    result = Hdf5Container.from_hdf5_group(f)
                     # エラーが発生しない場合は、結果を確認
                     assert isinstance(result._source, dict)
                 except TypeError as e:
@@ -664,7 +664,7 @@ class TestEdgeCases:
         try:
             # 書き込み
             with h5py.File(tmp_path, "w") as f:
-                interface = Hdf5Storage(data)
+                interface = Hdf5Container(data)
                 interface.to_hdf5_group(f)
 
             # ファイルサイズを確認
@@ -673,7 +673,7 @@ class TestEdgeCases:
 
             # 読み込み
             with h5py.File(tmp_path, "r") as f:
-                restored_interface = Hdf5Storage.from_hdf5_group(f)
+                restored_interface = Hdf5Container.from_hdf5_group(f)
                 restored_data = restored_interface._source
 
             assert restored_data["huge_data"].shape == (10000, 1000)

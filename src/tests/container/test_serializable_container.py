@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SerializableStorage の機能軸テスト
+SerializableContainer の機能軸テスト
 """
 
 from dataclasses import dataclass
@@ -9,11 +9,11 @@ from typing import Any, Dict, List
 import h5py
 import pytest
 
-from src.modules.container.serializable_storage import SerializableStorage
+from src.modules.container.serializable_container import SerializableContainer
 
 
 @dataclass
-class SimpleData(SerializableStorage):
+class SimpleData(SerializableContainer):
     """テスト用のシンプルなデータクラス"""
 
     name: str
@@ -21,7 +21,7 @@ class SimpleData(SerializableStorage):
     active: bool = True
 
 
-class ComplexData(SerializableStorage):
+class ComplexData(SerializableContainer):
     """テスト用の複雑なクラス"""
 
     def __init__(self, config: Dict[str, Any], items: List[str], metadata: str = "default"):
@@ -31,7 +31,7 @@ class ComplexData(SerializableStorage):
 
 
 @dataclass
-class NestedData(SerializableStorage):
+class NestedData(SerializableContainer):
     """テスト用のネストしたデータクラス"""
 
     simple_data: SimpleData
@@ -43,7 +43,7 @@ class TestBasicFunctionality:
     """基本機能のテスト"""
 
     def test_inheritance(self):
-        """SerializableStorageがSerializableObjectを継承していることを確認"""
+        """SerializableContainerがSerializableObjectを継承していることを確認"""
         data = SimpleData(name="test", value=42)
 
         # SerializableObjectのメソッドが使える
@@ -154,7 +154,7 @@ class TestComplexData:
         """異なる型の混在データのテスト"""
 
         @dataclass
-        class MixedTypes(SerializableStorage):
+        class MixedTypes(SerializableContainer):
             string_val: str
             int_val: int
             float_val: float

@@ -10,12 +10,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from src.main.utils.runner import Runner, RunnerConfig
 from src.modules.extract.extractor.extractor import Extractor
 from src.modules.extract.language.esm.esm1b import ESM1bLanguage
 from src.modules.extract.language.esm.esm2 import ESM2Language
 from src.modules.protein.protein_list import ProteinList
 from src.modules.protein.protein_types import ProteinLanguageName
-from src.modules.runner.runner import Runner, RunnerConfig
 
 
 @dataclass

@@ -4,12 +4,12 @@ from typing import Self
 
 import h5py
 
+from src.modules.container.hdf5_container import Hdf5Container
 from src.modules.container.hdf5_io import HDF5IO
-from src.modules.container.hdf5_storage import Hdf5Storage
 from src.modules.container.serializable_object import SerializableObject
 
 
-class SerializableStorage(SerializableObject, HDF5IO):
+class SerializableContainer(SerializableObject, HDF5IO):
     """A serializable object that can be persisted to both dictionary and HDF5 formats.
 
     This class combines the dictionary serialization capabilities of SerializableObject
@@ -27,7 +27,7 @@ class SerializableStorage(SerializableObject, HDF5IO):
         """
         # Convert to dictionary first, then to HDF5
         data_dict = self.to_dict()
-        storage = Hdf5Storage(data_dict)
+        storage = Hdf5Container(data_dict)
         return storage.to_hdf5_group(group)
 
     @classmethod
@@ -41,7 +41,7 @@ class SerializableStorage(SerializableObject, HDF5IO):
             New instance of this class restored from HDF5 data.
         """
         # Read from HDF5, then convert from dictionary
-        storage = Hdf5Storage.from_hdf5_group(group)
+        storage = Hdf5Container.from_hdf5_group(group)
         return cls.from_dict(dict(storage._source))
 
     def save_as_hdf5(self, file_path: str) -> None:
