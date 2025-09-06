@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-arabidopsisデータセットの特徴抽出スクリプト
+testデータセットの特徴抽出スクリプト
 
-このスクリプトはManagerを使用してarabidopsisデータセットに対して
+このスクリプトはManagerを使用してtestデータセットに対して
 ESM2とESM1bモデルでの特徴抽出を実行します。
 """
 
 import logging
 
-from src.main.configs.extraction.esm2.arabidopsis import arabidopsis_config as esm2_config
+from src.main.configs.extraction.test import test_config
 from src.main.utils.manager import Manager
 
 
@@ -17,7 +17,7 @@ def setup_logging():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.FileHandler("arabidopsis_extraction.log"), logging.StreamHandler()],
+        handlers=[logging.FileHandler("test_extraction.log"), logging.StreamHandler()],
     )
 
 
@@ -27,11 +27,11 @@ def main():
     setup_logging()
     logger = logging.getLogger(__name__)
 
-    logger.info("=== arabidopsis特徴抽出スクリプト開始 ===")
+    logger.info("=== test特徴抽出スクリプト開始 ===")
 
     try:
         # 両方のモデル設定を使用
-        configs = [esm2_config]
+        configs = [test_config]
         logger.info(f"{len(configs)}個の抽出設定を準備しました")
 
         # Managerで実行
@@ -58,7 +58,7 @@ def main():
             for i, result in enumerate(manager.get_results(), 1):
                 logger.info(f"結果{i}: {len(result)}個のタンパク質を処理")
 
-        logger.info("=== arabidopsis特徴抽出スクリプト完了 ===")
+        logger.info("=== test特徴抽出スクリプト完了 ===")
 
         return successful_count > 0
 
