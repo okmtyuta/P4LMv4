@@ -4,8 +4,6 @@ esm1b用の全Extraction configをManagerで順次実行するスクリプト
 （動的探索は用いず、明示importで収集）
 """
 
-from typing import List
-
 from src.main.configs.extraction.deeplc.esm1b import (
     arabidopsis_config,
     atlantis_silica_config,
@@ -32,7 +30,7 @@ from src.main.configs.extraction.deeplc.esm1b import (
 from src.main.utils.manager import Manager
 from src.main.utils.runner import RunnerConfig
 
-ALL_CONFIGS: List[RunnerConfig] = [
+ALL_CONFIGS: list[RunnerConfig] = [
     arabidopsis_config,
     atlantis_silica_config,
     dia_hf_config,
@@ -58,9 +56,9 @@ ALL_CONFIGS: List[RunnerConfig] = [
 
 
 def main() -> None:
-    configs = ALL_CONFIGS
-    print(f"Found {len(configs)} configs under deeplc.esm1b")
-    manager = Manager(configs)
+    print(f"Found {len(ALL_CONFIGS)} configs under deeplc.esm1b")
+
+    manager = Manager(ALL_CONFIGS)
     manager.run_all()
     if manager.has_errors():
         print(f"{len(manager.get_errors())} runs failed.")
