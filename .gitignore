@@ -22,6 +22,8 @@ data
 .mypy_cache
 .ruff_cache
 .pytest_cache
+.uv_cache
 
 # log
 *.log
+logs

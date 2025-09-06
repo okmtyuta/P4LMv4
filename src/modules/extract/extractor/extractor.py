@@ -1,7 +1,6 @@
+import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Optional
-
-import multiprocessing as mp
 
 from tqdm import tqdm
 
@@ -57,7 +56,6 @@ class Extractor:
 
     def _process_parallel(self, protein_lists: list[ProteinList], max_workers: Optional[int]) -> ProteinList:
         """Process batches in parallel using ProcessPoolExecutor."""
-        # spawn を明示
         ctx = mp.get_context("spawn")
         with ProcessPoolExecutor(max_workers=max_workers, mp_context=ctx) as executor:
             # 各バッチを並列で処理

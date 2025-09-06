@@ -1,10 +1,19 @@
 {
 	"cSpell.words": [
+		"arabidopsis",
 		"asstr",
+		"deeplc",
+		"deeprt",
 		"frombuffer",
+		"hela",
+		"hilic",
+		"ishihama",
+		"lumos",
 		"ndarray",
 		"numpy",
+		"proteometools",
 		"pytest",
-		"tobytes"
+		"tobytes",
+		"xbridge"
 	]
 }
