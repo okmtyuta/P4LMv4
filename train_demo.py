@@ -15,8 +15,12 @@ from src.modules.data_process.positional_encoder import (
     LearnableAbsolutePositionalScaler,
     LearnableFourierPositionalEncoder,
     LearnableRoPEPositionalEncoder,
+    FloaterPositionalEncoder,
     RoPEPositionalEncoder,
     SinusoidalPositionalEncoder,
+)
+from src.modules.data_process.positional_encoder.floater_dynamics import (
+    SimpleGatedSineDynamics,
 )
 from src.modules.dataloader.dataloader import Dataloader, DataloaderConfig
 from src.modules.model.basic import BasicModel
@@ -37,13 +41,30 @@ output_props = ["rt"]
 
 initializer = Initializer()
 
-sipe = SinusoidalPositionalEncoder(a=10000, b=1, gamma=1 / 2)
-rope = RoPEPositionalEncoder(theta_base=10000)
-lfpe = LearnableFourierPositionalEncoder(64, 10.0, 10000.0, 0.1)
-lape = LearnableAbsolutePositionalAdder(max_length=30)
-lapes = LearnableAbsolutePositionalScaler(max_length=30)
-lrope = LearnableRoPEPositionalEncoder(dim=1280, theta_base=10000)
-blrope = BidirectionalLearnableRoPEPositionalEncoder(dim=1280, theta_base=10000)
+dim = 1280
+
+# 既存のエンコーダ例（未使用だが残して参考にする場合はコメントアウト）
+# sipe = SinusoidalPositionalEncoder(a=10000, b=1, gamma=1 / 2)
+# rope = RoPEPositionalEncoder(theta_base=10000)
+# lfpe = LearnableFourierPositionalEncoder(64, 10.0, 10000.0, 0.1)
+# lape = LearnableAbsolutePositionalAdder(max_length=30)
+# lapes = LearnableAbsolutePositionalScaler(max_length=30)
+# lrope = LearnableRoPEPositionalEncoder(dim=dim, theta_base=10000)
+# blrope = BidirectionalLearnableRoPEPositionalEncoder(dim=dim, theta_base=10000)
+
+# FLOATER 用 Dynamics とエンコーダ
+dynamics = SimpleGatedSineDynamics(
+    dim=dim, hidden=256, num_freqs=8, omega_min=0.1, omega_max=10.0, damping=0.1
+)
+floater = FloaterPositionalEncoder(
+    dim=dim,
+    dynamics=dynamics,
+    delta_t=0.5,
+    method="dopri5",
+    rtol=1e-3,
+    atol=1e-6,
+    use_adjoint=True,
+)
 
 agg = Aggregator("mean")
 wagg = WeightedMeanAggregator(dim=1280, max_length=64)
@@ -51,7 +72,7 @@ esmagg = EndsSegmentMeanAggregator(head_len=8, tail_len=8)
 lsagg = LogSumExpAggregator(tau=5.0)
 apagg = AttentionPoolingAggregator(dim=1280, num_queries=2, temperature=5.0)
 
-process_list = DataProcessList(iterable=[initializer, lrope, apagg])
+process_list = DataProcessList(iterable=[initializer, floater, agg])
 
 dataloader_config = DataloaderConfig(
     protein_list=protein_list,
@@ -68,8 +89,8 @@ model = BasicModel(input_dim=dataloader.output_dim(input_dim=1280))
 optimizer = RAdamScheduleFree(
     [
         {"params": model.parameters(), "lr": 1e-3},
-        {"params": lrope.parameters(), "lr": 5e-4},
-        {"params": apagg.parameters(), "lr": 5e-4},
+        {"params": floater.parameters(), "lr": 5e-4},
+        # {"params": apagg.parameters(), "lr": 5e-4},
     ]
 )
 

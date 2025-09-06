@@ -8,7 +8,6 @@ ESM2とESM1bモデルでの特徴抽出を実行します。
 
 import logging
 
-from src.main.configs.extraction.esm1b.arabidopsis import arabidopsis_config as esm1b_config
 from src.main.configs.extraction.esm2.arabidopsis import arabidopsis_config as esm2_config
 from src.main.utils.manager import Manager
 

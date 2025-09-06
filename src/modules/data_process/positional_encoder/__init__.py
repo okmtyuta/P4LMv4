@@ -1,3 +1,4 @@
+from .floater_positional_encoder import FloaterPositionalEncoder
 from .learnable_absolute_positional_encoder import (
     LearnableAbsolutePositionalAdder,
     LearnableAbsolutePositionalScaler,
@@ -37,4 +38,6 @@ __all__ = [
     # Learnable Absolute (add/scale)
     "LearnableAbsolutePositionalAdder",
     "LearnableAbsolutePositionalScaler",
+    # FLOATER (ODE-based)
+    "FloaterPositionalEncoder",
 ]

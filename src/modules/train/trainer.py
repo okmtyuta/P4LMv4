@@ -41,7 +41,8 @@ class Trainer:
         batch_outputs: list[torch.Tensor] = []
         batch_protein_lists: list[ProteinList] = []
 
-        for batch in dataloader.batches:
+        for i, batch in enumerate(dataloader.batches):
+            print(f"{i} of {len(dataloader.batches)}")
             _label, _output, _protein_list = self._batch_predict(batch=batch, backward=backward)
             batch_labels.append(_label)
             batch_outputs.append(_output)
