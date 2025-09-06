@@ -10,7 +10,7 @@
 - 位置インデックス: $p_l$（1 始まり）。
 - 学習パラメータ（周波数ベクトルの対数）: $\boldsymbol{\beta} \in \mathbb{R}^{H}$ 。
 - 周波数（正値制約）: $\boldsymbol{\omega} = \exp\left(\boldsymbol{\beta}\right) \in \mathbb{R}_{>0}^{H}$ 。
-- 初期化: $\omega_k^{(0)} = \theta_{\text{base}}^{\,-2k/D}$（$k=0,1,\dots,H-1$）。
+- 初期化: $\omega_k^{(0)} = \theta_{\mathrm{base}}^{-2k/D}$（$k=0,1,\dots,H-1$）。
 
 実装では $\boldsymbol{\beta} = \log \boldsymbol{\omega}$ を `nn.Parameter` として保持し， $\omega_k>0$ を保証します。
 
@@ -26,10 +26,10 @@
 各ペア $k\in\{0,\dots,H-1\}$ に対し角度を
 
 $$
-  \phi_{l,k} = p_l\, \omega_k
+  \phi_{l,k} = p_l \omega_k
 $$
 
-と定義します。ペア $(2k,\,2k+1)$ に対応する 2 次元ベクトルに回転行列
+と定義します。ペア $(2k,2k+1)$ に対応する 2 次元ベクトルに回転行列
 
 $$
   R\left(\phi\right) =
@@ -53,10 +53,10 @@ $D$ が奇数のときは末尾チャネル $D-1$ をそのまま保持します
 標準 RoPE では周波数が固定です: 
 
 $$
-  \omega_k = \theta_{\text{base}}^{-2k/D}\quad\left(\text{固定}\right).
+  \omega_k = \theta_{\mathrm{base}}^{-2k/D}\quad\left(\text{固定}\right).
 $$
 
-Learnable RoPE では $\omega_k$ を学習し， $\beta_k = \log \omega_k$ を直接最適化します。これによりデータ分布に応じた周波数スケールへの適応が可能で，表現力や収束特性の改善が期待できます（$\theta_{\text{base}}$ は初期化にのみ使用）。
+Learnable RoPE では $\omega_k$ を学習し， $\beta_k = \log \omega_k$ を直接最適化します。これによりデータ分布に応じた周波数スケールへの適応が可能で，表現力や収束特性の改善が期待できます（ $\theta_{\mathrm{base}}$ は初期化にのみ使用）。
 
 ## 前向き計算のまとめ
 
@@ -90,25 +90,25 @@ $\omega_k = e^{\beta_k}$ より
 
 $$
   \frac{\partial \omega_k}{\partial \beta_k} = \omega_k,\quad
-  \frac{\partial \phi_{l,k}}{\partial \beta_k} = p_l\,\omega_k.
+  \frac{\partial \phi_{l,k}}{\partial \beta_k} = p_l \omega_k.
 $$
 
 また
 
 $$
-  \frac{\partial y_{l,2k}}{\partial \phi_{l,k}} = -x_{l,2k}\,\sin\left(\phi_{l,k}\right) - x_{l,2k+1}\,\cos\left(\phi_{l,k}\right),
+  \frac{\partial y_{l,2k}}{\partial \phi_{l,k}} = -x_{l,2k} \sin\left(\phi_{l,k}\right) - x_{l,2k+1} \cos\left(\phi_{l,k}\right),
 $$
 
 $$
-  \frac{\partial y_{l,2k+1}}{\partial \phi_{l,k}} = x_{l,2k}\,\cos\left(\phi_{l,k}\right) - x_{l,2k+1}\,\sin\left(\phi_{l,k}\right),
+  \frac{\partial y_{l,2k+1}}{\partial \phi_{l,k}} = x_{l,2k} \cos\left(\phi_{l,k}\right) - x_{l,2k+1} \sin\left(\phi_{l,k}\right),
 $$
 
 であるため，連鎖律により
 
 $$
   \frac{\partial y_{l,j}}{\partial \beta_k}
-  = \frac{\partial y_{l,j}}{\partial \phi_{l,k}}\,\frac{\partial \phi_{l,k}}{\partial \beta_k}
-  = p_l\,\omega_k\,\frac{\partial y_{l,j}}{\partial \phi_{l,k}}\quad \left(j\in\left\{2k,2k+1\right\}\right)\,.
+  = \frac{\partial y_{l,j}}{\partial \phi_{l,k}} \frac{\partial \phi_{l,k}}{\partial \beta_k}
+  = p_l \omega_k \frac{\partial y_{l,j}}{\partial \phi_{l,k}}\quad \left(j\in\left\{2k,2k+1\right\}\right).
 $$
 
 位置 $p_l$ が大きいほど角度変化への感度が増し，学習信号が遠位置まで届きます。
@@ -122,7 +122,7 @@ $$
     \left\|\begin{bmatrix}x_{l,2k}\\x_{l,2k+1}\end{bmatrix}\right\|_2
   $$
   が成り立ちます（奇数末尾は恒等）。
-- 計算量: $\mathcal{O}(L\,D)$，追加メモリは $\cos/\sin\in\mathbb{R}^{L\times H}$ 程度。
+- 計算量: $\mathcal{O}(LD)$，追加メモリは $\cos/\sin\in\mathbb{R}^{L\times H}$ 程度。
 - 数値安定性: $\beta$ によるパラメータ化で $\omega>0$ を保証し，指数スケールを安定に扱います。
 - キャッシュ方針: Learnable RoPE は $\omega$ が更新されるため角度は毎回再計算（固定周波数の標準 RoPE はキャッシュ可能）。
 - 位置は 1 始まり: 実装では $1,\dots,L$（逆順は $L,\dots,1$）。
@@ -130,8 +130,8 @@ $$
 ## 実装対応（抜粋）
 
 - ファイル: `src/modules/data_process/positional_encoder/learnable_rope_positional_encoder.py`
-- パラメータ: `self._log_inv_freq \equiv \boldsymbol{\beta}`，初期値 $\log\left(\theta_{\text{base}}^{\,-2m/D}\right)$ 。
-- 角度計算: $\texttt{angles} = p\,\texttt{[:,None]}\;\cdot\; \exp(\boldsymbol{\beta})\,\texttt{[None,:]}$， $\cos/\sin$ をブロードキャスト計算。
+- パラメータ: `self._log_inv_freq \equiv \boldsymbol{\beta}`，初期値 $\log\left(\theta_{\mathrm{base}}^{-2m/D}\right)$ 。
+- 角度計算: $\texttt{angles} = p\texttt{[:,None]}\;\cdot\; \exp(\boldsymbol{\beta})\texttt{[None,:]}$， $\cos/\sin$ をブロードキャスト計算。
 - 回転適用: 偶数・奇数インデックスをストライド分割し，上記の $2\times2$ 回転を適用。
 - 形状: 入出力 $(L,D)$（双方向は $(L,2D)$）。奇数末尾は保持。
 
