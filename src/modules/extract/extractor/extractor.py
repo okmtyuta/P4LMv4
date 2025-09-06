@@ -1,6 +1,8 @@
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Optional
 
+import multiprocessing as mp
+
 from tqdm import tqdm
 
 from src.modules.extract.language._language import _Language
@@ -34,7 +36,6 @@ class Extractor:
         # バッチサイズに基づいてProteinListを手動で分割
         protein_lists: list[ProteinList] = []
         total_proteins = len(protein_list)
-
         for start_idx in range(0, total_proteins, batch_size):
             end_idx = min(start_idx + batch_size, total_proteins)
             batch = protein_list[start_idx:end_idx]
@@ -56,7 +57,9 @@ class Extractor:
 
     def _process_parallel(self, protein_lists: list[ProteinList], max_workers: Optional[int]) -> ProteinList:
         """Process batches in parallel using ProcessPoolExecutor."""
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # spawn を明示
+        ctx = mp.get_context("spawn")
+        with ProcessPoolExecutor(max_workers=max_workers, mp_context=ctx) as executor:
             # 各バッチを並列で処理
             future_to_batch = {
                 executor.submit(_process_batch_with_language, self._language, batch): batch for batch in protein_lists
