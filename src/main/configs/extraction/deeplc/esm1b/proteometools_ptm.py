@@ -13,6 +13,5 @@ proteometools_ptm_config = ExtractionRunnerConfig(
     dataset_name="proteometools_ptm_data_esm1b",
     language_model="esm1b",
     batch_size=32,
-    parallel=True,
-    max_workers=4,
+    parallel=False,
 )

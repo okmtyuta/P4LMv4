@@ -13,6 +13,5 @@ dia_hf_config = ExtractionRunnerConfig(
     dataset_name="dia_hf_data_esm2",
     language_model="esm2",
     batch_size=32,
-    parallel=True,
-    max_workers=4,
+    parallel=False,
 )

@@ -13,6 +13,5 @@ luna_silica_config = ExtractionRunnerConfig(
     dataset_name="luna_silica_data_esm2",
     language_model="esm2",
     batch_size=32,
-    parallel=True,
-    max_workers=4,
+    parallel=False,
 )
