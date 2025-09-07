@@ -14,6 +14,7 @@ import torch
 from matplotlib.axes import Axes
 
 from src.modules.protein.protein_types import ProteinPropName
+from src.modules.train.criterion import CriteriaName
 from src.modules.train.loaded_train_result import LoadedTrainResult
 from src.modules.train.train_result import EpochPhaseResult, EpochSummary
 
@@ -38,7 +39,7 @@ class Visualizer:
         self,
         accessor: Callable[[EpochSummary], EpochPhaseResult],
         prop_name: ProteinPropName,
-        metric: str,
+        metric: CriteriaName,
     ) -> list[float]:
         """指定アクセサで取り出したフェーズの指標系列を返す（型安全）。
 
@@ -54,22 +55,28 @@ class Visualizer:
                 else:
                     values.append(float("nan"))
                     continue
-            crit = phase_obj.criteria.get(prop_name)
+            # compute_criteria() 実行後でも mypy は Optional を外せないため再確認する
+            criteria_map = phase_obj.criteria
+            if criteria_map is None:
+                values.append(float("nan"))
+                continue
+            crit = criteria_map.get(prop_name)
             if crit is None:
                 values.append(float("nan"))
             else:
-                values.append(float(crit.get(metric, float("nan"))))
+                # Criteria は必ず全キーを持つ TypedDict なので添字アクセスで取得する
+                values.append(float(crit[metric]))
         return values
 
-    def _curve_train(self, prop_name: ProteinPropName, metric: str) -> list[float]:
+    def _curve_train(self, prop_name: ProteinPropName, metric: CriteriaName) -> list[float]:
         """train フェーズの指標系列を返す。"""
         return self._curve_from(lambda s: s.train, prop_name, metric)
 
-    def _curve_validate(self, prop_name: ProteinPropName, metric: str) -> list[float]:
+    def _curve_validate(self, prop_name: ProteinPropName, metric: CriteriaName) -> list[float]:
         """validate フェーズの指標系列を返す。"""
         return self._curve_from(lambda s: s.validate, prop_name, metric)
 
-    def _curve_evaluate(self, prop_name: ProteinPropName, metric: str) -> list[float]:
+    def _curve_evaluate(self, prop_name: ProteinPropName, metric: CriteriaName) -> list[float]:
         """evaluate フェーズの指標系列を返す。"""
         return self._curve_from(lambda s: s.evaluate, prop_name, metric)
 

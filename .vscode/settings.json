@@ -2,18 +2,26 @@
 	"cSpell.words": [
 		"arabidopsis",
 		"asstr",
+		"axhline",
+		"axvline",
 		"deeplc",
 		"deeprt",
+		"figsize",
 		"frombuffer",
 		"hela",
 		"hilic",
 		"ishihama",
+		"linestyle",
 		"lumos",
 		"ndarray",
 		"numpy",
+		"pearsonr",
 		"proteometools",
 		"pytest",
 		"tobytes",
-		"xbridge"
+		"twinx",
+		"xbridge",
+		"xlabel",
+		"ylabel"
 	]
 }
