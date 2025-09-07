@@ -92,6 +92,12 @@ class TrainRecorder:
         if self._belle_epoch is not None:
             group.attrs["belle_epoch"] = self._belle_epoch
 
+        for summary in self._history:
+            if self._belle_epoch is not None and summary.epoch != self._belle_epoch:
+                summary.train.forget()
+                summary.validate.forget()
+                summary.evaluate.forget()
+
         # history
         hist_g = group.create_group("history")
         self._history.to_hdf5_group(hist_g)

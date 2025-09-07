@@ -25,8 +25,8 @@ class EpochPhaseResult(SerializableContainer):
     """1 フェーズ分（train/validate/evaluate）の推論・評価結果。"""
 
     epoch: int
-    output: torch.Tensor
-    label: torch.Tensor
+    output: Optional[torch.Tensor]
+    label: Optional[torch.Tensor]
     input_props: list[ProteinPropName]
     output_props: list[ProteinPropName]
     protein_list: Optional[ProteinList] = None
@@ -35,11 +35,15 @@ class EpochPhaseResult(SerializableContainer):
     @property
     def output_by_prop(self) -> dict[ProteinPropName, torch.Tensor]:
         """出力テンソルをプロパティ名で列アクセス可能にするビュー。"""
+        if self.output is None:
+            raise RuntimeError("output tensor has been forgotten (set to None)")
         return {p: self.output[:, i] for i, p in enumerate(self.output_props)}
 
     @property
     def label_by_prop(self) -> dict[ProteinPropName, torch.Tensor]:
         """教師テンソルをプロパティ名で列アクセス可能にするビュー。"""
+        if self.label is None:
+            raise RuntimeError("label tensor has been forgotten (set to None)")
         return {p: self.label[:, i] for i, p in enumerate(self.output_props)}
 
     @property
@@ -51,6 +55,8 @@ class EpochPhaseResult(SerializableContainer):
 
     def compute_criteria(self) -> "EpochPhaseResult":
         """各プロパティごとの指標を計算し `criteria` に格納する。"""
+        if self.output is None or self.label is None:
+            raise RuntimeError("cannot compute criteria: output/label is None (forgotten)")
         metrics: dict[ProteinPropName, Criteria] = {}
         for i, name in enumerate(self.output_props):
             metrics[name] = Criterion.call(output=self.output[:, i], label=self.label[:, i])
@@ -61,11 +67,26 @@ class EpochPhaseResult(SerializableContainer):
         """予測値を `protein_list` の各 Protein の `predicted` へ書き戻す。"""
         if self.protein_list is None:
             raise RuntimeError("proteins is None. set ProteinList before assigning predictions.")
+        if self.output is None:
+            raise RuntimeError("output tensor is None (forgotten). cannot assign predictions.")
         for i, protein in enumerate(self.protein_list):
             predicted = dict(protein.predicted or {})
             for j, prop in enumerate(self.output_props):
                 predicted[prop] = float(self.output[i, j].item())
             protein.set_predicted(predicted)
+        return self
+
+    def forget(self) -> "EpochPhaseResult":
+        """出力/教師テンソルを None へ設定して忘却する（軽量化）。
+
+        注意:
+            - 忘却後は `output`/`label` を参照する操作（`assign_predictions_to_proteins`、
+              `output_by_prop`、`label_by_prop`、`compute_criteria` など）は使用不可。
+            - 必要な場合は事前に `compute_criteria()` を呼び、`criteria` に保存してから忘却してください。
+        """
+        self.protein_list = None
+        self.output = None
+        self.label = None
         return self
 
 

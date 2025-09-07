@@ -52,10 +52,4 @@ class ProteinList(SerializableContainerList[Protein]):
         rng = random.Random(seed)
         rng.shuffle(self._data)
 
-        print("====")
-        print("====")
-        print("seed is", seed)
-        print("====")
-        print("====")
-
         return self

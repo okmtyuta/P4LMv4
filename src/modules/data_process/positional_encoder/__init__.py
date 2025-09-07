@@ -2,33 +2,47 @@
 Positional Encoder パッケージのエクスポート。
 """
 
-from .floater_positional_encoder import FloaterPositionalEncoder
-from .learnable_absolute_positional_encoder import (
+from src.modules.data_process.positional_encoder.additive_sinusoidal_positional_encoder import (
+    AdditiveSinusoidalPositionalEncoder,
+    BidirectionalAdditiveSinusoidalPositionalEncoder,
+    ReversedAdditiveSinusoidalPositionalEncoder,
+)
+from src.modules.data_process.positional_encoder.floater_positional_encoder import (
+    FloaterPositionalEncoder,
+    SimpleGatedSineDynamics,
+)
+from src.modules.data_process.positional_encoder.learnable_absolute_positional_encoder import (
     LearnableAbsolutePositionalAdder,
     LearnableAbsolutePositionalScaler,
 )
-from .learnable_fourier_positional_encoder import LearnableFourierPositionalEncoder
-from .learnable_rope_positional_encoder import (
+from src.modules.data_process.positional_encoder.learnable_fourier_positional_encoder import (
+    LearnableFourierPositionalEncoder,
+)
+from src.modules.data_process.positional_encoder.learnable_rope_positional_encoder import (
     BidirectionalLearnableRoPEPositionalEncoder,
     LearnableRoPEPositionalEncoder,
     ReversedLearnableRoPEPositionalEncoder,
 )
-from .rope_positional_encoder import (
+from src.modules.data_process.positional_encoder.multiplicative_sinusoidal_positional_encoder import (
+    BidirectionalMultiplicativeSinusoidalPositionalEncoder,
+    MultiplicativeSinusoidalPositionalEncoder,
+    ReversedMultiplicativeSinusoidalPositionalEncoder,
+)
+from src.modules.data_process.positional_encoder.rope_positional_encoder import (
     BidirectionalRoPEPositionalEncoder,
     ReversedRoPEPositionalEncoder,
     RoPEPositionalEncoder,
 )
-from .sinusoidal_positional_encoder import (
-    BidirectionalSinusoidalPositionalEncoder,
-    ReversedSinusoidalPositionalEncoder,
-    SinusoidalPositionalEncoder,
-)
 
 __all__ = [
-    # Sinusoidal
-    "SinusoidalPositionalEncoder",
-    "ReversedSinusoidalPositionalEncoder",
-    "BidirectionalSinusoidalPositionalEncoder",
+    # Sinusoidal (multiplicative)
+    "MultiplicativeSinusoidalPositionalEncoder",
+    "ReversedMultiplicativeSinusoidalPositionalEncoder",
+    "BidirectionalMultiplicativeSinusoidalPositionalEncoder",
+    # Sinusoidal (additive)
+    "AdditiveSinusoidalPositionalEncoder",
+    "ReversedAdditiveSinusoidalPositionalEncoder",
+    "BidirectionalAdditiveSinusoidalPositionalEncoder",
     # RoPE (fixed)
     "RoPEPositionalEncoder",
     "ReversedRoPEPositionalEncoder",
@@ -44,4 +58,5 @@ __all__ = [
     "LearnableAbsolutePositionalScaler",
     # FLOATER (ODE-based)
     "FloaterPositionalEncoder",
+    "SimpleGatedSineDynamics",
 ]

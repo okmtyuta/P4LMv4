@@ -9,9 +9,7 @@ from src.modules.data_process.positional_encoder import (
     LearnableAbsolutePositionalScaler,
     LearnableFourierPositionalEncoder,
 )
-from src.modules.data_process.positional_encoder.floater_dynamics import (
-    SimpleGatedSineDynamics,
-)
+from src.modules.data_process.positional_encoder.floater_positional_encoder import SimpleGatedSineDynamics
 from src.modules.protein.protein import Protein
 from src.modules.protein.protein_list import ProteinList
 

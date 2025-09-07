@@ -46,7 +46,7 @@ class LearnableFourierPositionalEncoder(DataProcess):
 
     @property
     def dim_factor(self) -> int:
-        """出力次元は D（=1倍）。"""
+        """出力次元は D（1倍）。"""
         return 1
 
     def _act(self, protein: Protein) -> Protein:

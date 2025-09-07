@@ -7,19 +7,22 @@ from src.modules.data_process.aggregator import (
     WeightedMeanAggregator,
 )
 from src.modules.data_process.positional_encoder import (
+    AdditiveSinusoidalPositionalEncoder,
+    BidirectionalAdditiveSinusoidalPositionalEncoder,
     BidirectionalLearnableRoPEPositionalEncoder,
+    BidirectionalMultiplicativeSinusoidalPositionalEncoder,
     BidirectionalRoPEPositionalEncoder,
-    BidirectionalSinusoidalPositionalEncoder,
     FloaterPositionalEncoder,
     LearnableAbsolutePositionalAdder,
     LearnableAbsolutePositionalScaler,
     LearnableFourierPositionalEncoder,
     LearnableRoPEPositionalEncoder,
+    MultiplicativeSinusoidalPositionalEncoder,
+    ReversedAdditiveSinusoidalPositionalEncoder,
     ReversedLearnableRoPEPositionalEncoder,
+    ReversedMultiplicativeSinusoidalPositionalEncoder,
     ReversedRoPEPositionalEncoder,
-    ReversedSinusoidalPositionalEncoder,
     RoPEPositionalEncoder,
-    SinusoidalPositionalEncoder,
 )
 
 
@@ -41,6 +44,9 @@ def test_imports_exist():
     assert RoPEPositionalEncoder is not None
     assert ReversedRoPEPositionalEncoder is not None
     assert BidirectionalRoPEPositionalEncoder is not None
-    assert SinusoidalPositionalEncoder is not None
-    assert ReversedSinusoidalPositionalEncoder is not None
-    assert BidirectionalSinusoidalPositionalEncoder is not None
+    assert MultiplicativeSinusoidalPositionalEncoder is not None
+    assert ReversedMultiplicativeSinusoidalPositionalEncoder is not None
+    assert BidirectionalMultiplicativeSinusoidalPositionalEncoder is not None
+    assert AdditiveSinusoidalPositionalEncoder is not None
+    assert ReversedAdditiveSinusoidalPositionalEncoder is not None
+    assert BidirectionalAdditiveSinusoidalPositionalEncoder is not None

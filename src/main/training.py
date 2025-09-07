@@ -44,7 +44,6 @@ class TrainingRunnerConfig(RunnerConfig):
 
     # 学習制御（デフォルトを許容）
     patience: int = 100
-    shuffle_seed: int = 100
 
     def __post_init__(self) -> None:
         # Path 化と入出力の検証

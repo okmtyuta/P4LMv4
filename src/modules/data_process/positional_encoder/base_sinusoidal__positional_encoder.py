@@ -1,15 +1,17 @@
 """
-サイン波に基づく簡易位置エンコード（双方向/反転も提供）。
+サイン波位置エンコードの共通基底（位置テンソル生成）。
+
+- 位置テンソルの計算のみを提供します。
+- 入力との結合（加法/乗法）は各サブクラスの `_act` 内で行ってください。
 """
 
 import torch
 
 from src.modules.data_process.data_process import DataProcess
-from src.modules.protein.protein import Protein
 
 
-class SinusoidalPositionalEncoderCache:
-    """(length, dim, reversed) をキーとしたテンソルキャッシュ。"""
+class SinusoidalPositionTensorCache:
+    """(length, dim, reversed) をキーとした位置テンソルのキャッシュ。"""
 
     def __init__(self) -> None:
         """空キャッシュで初期化する。"""
@@ -25,18 +27,18 @@ class SinusoidalPositionalEncoderCache:
 
 
 class _BaseSinusoidalPositionalEncoder(DataProcess):
-    """サイン波位置エンコードの共通実装。"""
+    """サイン波位置エンコードの共通実装（結合はサブクラスに委譲）。"""
 
     def __init__(self, a: float, b: float, gamma: float) -> None:
         """ハイパーパラメータを設定する。"""
         self._a = a
         self._b = b
         self._gamma = gamma
-        self._cache = SinusoidalPositionalEncoderCache()
+        self._cache = SinusoidalPositionTensorCache()
 
     @property
     def dim_factor(self) -> int:
-        """出力次元は D（=1倍）。"""
+        """出力次元は D（1倍）。"""
         return 1
 
     # ベクトル化された位置エンコード行列の生成
@@ -45,24 +47,19 @@ class _BaseSinusoidalPositionalEncoder(DataProcess):
         cached = self._cache.read(length=length, dim=dim, reversed=reversed)
         if cached is not None:
             return cached
-
         # 位置 [1..length]（逆順が指定された場合は length..1）
         positions = self._positions(length=length, reversed=reversed)
         p_col = positions[:, None]  # (L, 1)
-
         # 次元インデックス [1..dim]
         i = torch.arange(1, dim + 1, dtype=torch.float32)  # (D,)
         even_mask = i.remainder(2) == 0  # True where i is even
-
         # 分母の事前計算（iは1始まり）
         den_even = self._a ** ((i - 1.0) / float(dim))  # (D,)
         den_odd = self._a ** ((i - 2.0) / float(dim))  # (D,)
-
         # ブロードキャスト計算 (L, D)
         even_vals = torch.sin(p_col / den_even) ** self._b + self._gamma
         odd_vals = torch.sin(p_col / den_odd) ** self._b + self._gamma
         vals = torch.where(even_mask[None, :], even_vals, odd_vals)
-
         self._cache.set(length=length, dim=dim, reversed=reversed, value=vals)
         return vals
 
@@ -76,56 +73,4 @@ class _BaseSinusoidalPositionalEncoder(DataProcess):
             return torch.arange(length, 0, -1, dtype=torch.float32)
         return torch.arange(1, length + 1, dtype=torch.float32)
 
-
-class SinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
-    """通常順序でサイン波エンコードを適用する。"""
-
-    def _act(self, protein: Protein) -> Protein:
-        """処理済テンソルへサイン波重みを乗算する。"""
-        reps = protein.get_processed()
-        L, D = reps.shape
-        pos = self._positional_tensor(length=L, dim=D, reversed=False)
-        out = reps * pos
-        return protein.set_processed(processed=out)
-
-
-class ReversedSinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
-    """逆順位置でサイン波エンコードを適用する。"""
-
-    def _act(self, protein: Protein) -> Protein:
-        """処理済テンソルへ逆順サイン波重みを乗算する。"""
-        reps = protein.get_processed()
-        L, D = reps.shape
-        pos = self._positional_tensor(length=L, dim=D, reversed=True)
-        out = reps * pos
-        return protein.set_processed(processed=out)
-
-
-class BidirectionalSinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
-    """通常/逆順を連結して 2D に拡張する。"""
-
-    @property
-    def dim_factor(self) -> int:  # 2D へ拡張
-        """出力次元は 2 倍。"""
-        return 2
-
-    def __init__(self, a: float, b: float, gamma: float) -> None:
-        """内部で通常・逆順の両エンコーダを構築する。"""
-        super().__init__(a=a, b=b, gamma=gamma)
-        self._normal = SinusoidalPositionalEncoder(a=a, b=b, gamma=gamma)
-        self._reversed = ReversedSinusoidalPositionalEncoder(a=a, b=b, gamma=gamma)
-
-    def _act(self, protein: Protein) -> Protein:
-        """2 方向のエンコードを連結して返す。"""
-        reps = protein.get_processed()
-        L, D = reps.shape
-        pos_normal = self._positional_tensor(length=L, dim=D, reversed=False)
-        pos_reversed = self._positional_tensor(length=L, dim=D, reversed=True)
-
-        # (L, 2D) に拡張
-        reps_cat = torch.cat([reps, reps], dim=1)
-        pos_cat = torch.cat([pos_normal, pos_reversed], dim=1)
-
-        out = reps_cat * pos_cat
-
-        return protein.set_processed(processed=out)
+    # 入力との結合処理は各サブクラスの `_act` で実装する。

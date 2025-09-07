@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RoPE positional encoder の動作テスト"""
+"""RoPE positional encoder の動作テスト（移行後の配置）。"""
 
 import torch
 

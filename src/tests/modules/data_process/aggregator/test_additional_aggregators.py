@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
+"""学習/非学習の追加 Aggregator 群の動作テスト。"""
+
 import torch
 
 from src.modules.data_process.aggregator.attention_pooling_aggregator import AttentionPoolingAggregator
 from src.modules.data_process.aggregator.ends_segment_mean_aggregator import EndsSegmentMeanAggregator
 from src.modules.data_process.aggregator.logsumexp_aggregator import LogSumExpAggregator
 from src.modules.data_process.aggregator.weighted_mean_aggregator import WeightedMeanAggregator
-from src.modules.data_process.positional_encoder.learnable_rope_positional_encoder import (
-    BidirectionalLearnableRoPEPositionalEncoder,
-    LearnableRoPEPositionalEncoder,
-    ReversedLearnableRoPEPositionalEncoder,
-)
 from src.modules.protein.protein import Protein
 from src.modules.protein.protein_list import ProteinList
 
@@ -19,22 +16,6 @@ def _plist(L: int, D: int) -> ProteinList:
     reps = torch.randn(L, D)
     p = Protein(key="k", props={"seq": "A" * L}, representations=reps, processed=reps.clone())
     return ProteinList([p])
-
-
-def test_learnable_rope_shapes():
-    plist = _plist(6, 4)
-    rope = LearnableRoPEPositionalEncoder(dim=4, theta_base=10000)
-    rrope = ReversedLearnableRoPEPositionalEncoder(dim=4, theta_base=10000)
-    brope = BidirectionalLearnableRoPEPositionalEncoder(dim=4, theta_base=10000)
-
-    a = rope(plist)[0].get_processed()
-    assert a.shape == (6, 4)
-    plist[0].set_processed(plist[0].get_representations())
-    b = rrope(plist)[0].get_processed()
-    assert b.shape == (6, 4)
-    plist[0].set_processed(plist[0].get_representations())
-    c = brope(plist)[0].get_processed()
-    assert c.shape == (6, 8)
 
 
 def test_weighted_mean_aggregator_constant_invariance():
@@ -56,7 +37,6 @@ def test_ends_segment_mean_shapes_and_values():
     esm = EndsSegmentMeanAggregator(head_len=2, tail_len=2)
     out = esm(plist)[0].get_processed()
     assert out.shape == (3 * D,)
-    # 手計算: head(0,1), center(2), tail(3,4)
     head = reps[:2].mean(0)
     center = reps[2:3].mean(0)
     tail = reps[3:].mean(0)

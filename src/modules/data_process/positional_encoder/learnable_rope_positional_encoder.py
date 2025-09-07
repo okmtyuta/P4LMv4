@@ -15,25 +15,22 @@ class _BaseLearnableRoPEPositionalEncoder(DataProcess):
     """学習可能な RoPE 基底クラス。ペアごとの周波数を学習する。"""
 
     def __init__(self, dim: int, theta_base: float) -> None:
-        """特徴次元と基底スケールを受け取り初期化する。"""
+        """特徴次元と基底スケールを受け取り初期化する。D は 2 以上が前提のため、`half == 0` の特別分岐は設けない。"""
         if dim <= 0:
             raise ValueError("dim must be positive")
         self._D = int(dim)
         self._half = self._D // 2
 
         # RoPE の初期周波数 inv_freq = base^{-2m/D} を対数で保持（>0の安定確保）
-        if self._half > 0:
-            m = torch.arange(0, self._half, dtype=torch.float32)
-            init_inv = float(theta_base) ** (-2.0 * m / float(self._D))
-            init_log_inv = torch.log(init_inv)
-        else:
-            init_log_inv = torch.empty(0, dtype=torch.float32)
+        m = torch.arange(0, self._half, dtype=torch.float32)
+        init_inv = float(theta_base) ** (-2.0 * m / float(self._D))
+        init_log_inv = torch.log(init_inv)
 
         self._log_inv_freq = nn.Parameter(init_log_inv)  # (half,)
 
     @property
     def dim_factor(self) -> int:
-        """出力次元は D（=1倍）。"""
+        """出力次元は D（1倍）。"""
         return 1
 
     def parameters(self) -> List[nn.Parameter]:  # type: ignore[override]
@@ -49,11 +46,7 @@ class _BaseLearnableRoPEPositionalEncoder(DataProcess):
     def _cos_sin(
         self, length: int, reversed: bool, device: torch.device, dtype: torch.dtype
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """cos/sin 行列を返す。half==0 の場合は空を返す。"""
-        if self._half == 0:
-            cos = torch.ones((length, 0), dtype=dtype, device=device)
-            sin = torch.zeros((length, 0), dtype=dtype, device=device)
-            return cos, sin
+        """cos/sin 行列を返す。"""
 
         p = self._positions(length=length, reversed=reversed, device=device, dtype=dtype)  # (L,)
         p_col = p[:, None]  # (L, 1)
@@ -70,8 +63,6 @@ class _BaseLearnableRoPEPositionalEncoder(DataProcess):
 
         cos, sin = self._cos_sin(length=L, reversed=reversed, device=x.device, dtype=x.dtype)
         half = self._half
-        if half == 0:
-            return x
 
         x_even = x[:, 0 : 2 * half : 2]
         x_odd = x[:, 1 : 2 * half : 2]

@@ -44,7 +44,7 @@ class _BaseRoPEPositionalEncoder(DataProcess):
 
     @property
     def dim_factor(self) -> int:
-        """出力次元は D（=1倍）。"""
+        """出力次元は D（1倍）。"""
         return 1
 
     def _positions(self, length: int, reversed: bool) -> torch.Tensor:
@@ -61,12 +61,6 @@ class _BaseRoPEPositionalEncoder(DataProcess):
 
         L, D = length, dim
         half = D // 2
-        if half == 0:
-            # D == 0 or 1 の場合にも対応
-            cos = torch.ones((L, 0), dtype=torch.float32)
-            sin = torch.zeros((L, 0), dtype=torch.float32)
-            self._cache.set(length, dim, reversed, cos, sin)
-            return cos, sin
 
         # 位置 (1..L) または (L..1)
         positions = self._positions(length=L, reversed=reversed)  # (L,)
@@ -84,12 +78,13 @@ class _BaseRoPEPositionalEncoder(DataProcess):
         return cos, sin
 
     def _apply_rope(self, reps: torch.Tensor, reversed: bool) -> torch.Tensor:
-        """RoPE による回転を適用して同形状のテンソルを返す。"""
+        """RoPE による回転を適用して同形状のテンソルを返す。
+
+        D が 2 未満の入力は来ない前提のため、`half == 0` の早期リターンは省く。
+        """
         L, D = reps.shape
         cos, sin = self._cos_sin(length=L, dim=D, reversed=reversed)  # (L, half)
         half = D // 2
-        if half == 0:
-            return reps
 
         x_even = reps[:, 0 : 2 * half : 2]
         x_odd = reps[:, 1 : 2 * half : 2]
