@@ -12,12 +12,15 @@ class SinusoidalPositionalEncoderCache:
     """(length, dim, reversed) をキーとしたテンソルキャッシュ。"""
 
     def __init__(self) -> None:
+        """空キャッシュで初期化する。"""
         self._cache: dict[tuple[int, int, bool], torch.Tensor] = {}
 
     def read(self, length: int, dim: int, reversed: bool) -> torch.Tensor | None:
+        """キーに一致する値を取得（未登録なら None）。"""
         return self._cache.get((length, dim, reversed))
 
     def set(self, length: int, dim: int, reversed: bool, value: torch.Tensor) -> None:
+        """キャッシュへ値を登録。"""
         self._cache[(length, dim, reversed)] = value
 
 
@@ -25,6 +28,7 @@ class _BaseSinusoidalPositionalEncoder(DataProcess):
     """サイン波位置エンコードの共通実装。"""
 
     def __init__(self, a: float, b: float, gamma: float) -> None:
+        """ハイパーパラメータを設定する。"""
         self._a = a
         self._b = b
         self._gamma = gamma
@@ -32,10 +36,12 @@ class _BaseSinusoidalPositionalEncoder(DataProcess):
 
     @property
     def dim_factor(self) -> int:
+        """出力次元は D（=1倍）。"""
         return 1
 
     # ベクトル化された位置エンコード行列の生成
     def _positional_tensor(self, length: int, dim: int, reversed: bool = False) -> torch.Tensor:
+        """位置エンコード行列を生成（キャッシュ利用）。"""
         cached = self._cache.read(length=length, dim=dim, reversed=reversed)
         if cached is not None:
             return cached
@@ -72,6 +78,8 @@ class _BaseSinusoidalPositionalEncoder(DataProcess):
 
 
 class SinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
+    """通常順序でサイン波エンコードを適用する。"""
+
     def _act(self, protein: Protein) -> Protein:
         reps = protein.get_processed()
         L, D = reps.shape
@@ -81,7 +89,10 @@ class SinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
 
 
 class ReversedSinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
+    """逆順位置でサイン波エンコードを適用する。"""
+
     def _act(self, protein: Protein) -> Protein:
+        """処理済テンソルへ逆順サイン波重みを乗算する。"""
         reps = protein.get_processed()
         L, D = reps.shape
         pos = self._positional_tensor(length=L, dim=D, reversed=True)
@@ -90,16 +101,21 @@ class ReversedSinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
 
 
 class BidirectionalSinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
+    """通常/逆順を連結して 2D に拡張する。"""
+
     @property
     def dim_factor(self) -> int:  # 2D へ拡張
+        """出力次元は 2 倍。"""
         return 2
 
     def __init__(self, a: float, b: float, gamma: float) -> None:
+        """内部で通常・逆順の両エンコーダを構築する。"""
         super().__init__(a=a, b=b, gamma=gamma)
         self._normal = SinusoidalPositionalEncoder(a=a, b=b, gamma=gamma)
         self._reversed = ReversedSinusoidalPositionalEncoder(a=a, b=b, gamma=gamma)
 
     def _act(self, protein: Protein) -> Protein:
+        """2 方向のエンコードを連結して返す。"""
         reps = protein.get_processed()
         L, D = reps.shape
         pos_normal = self._positional_tensor(length=L, dim=D, reversed=False)

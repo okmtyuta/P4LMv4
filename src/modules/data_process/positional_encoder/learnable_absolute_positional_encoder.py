@@ -15,6 +15,7 @@ class LearnableAbsolutePositionalAdder(DataProcess):
     """位置 p ごとに学習スカラのバイアス b[p] を加える。"""
 
     def __init__(self, max_length: int) -> None:
+        """最大位置長を指定して学習バイアスを初期化する。"""
         if max_length <= 0:
             raise ValueError("max_length must be positive")
         self._max_len = int(max_length)
@@ -51,6 +52,7 @@ class LearnableAbsolutePositionalScaler(DataProcess):
     """位置 p ごとにゲート g[p]=1+s[p] を掛ける（s[p] は学習スカラ）。"""
 
     def __init__(self, max_length: int) -> None:
+        """最大位置長を指定して学習スケールを初期化する。"""
         if max_length <= 0:
             raise ValueError("max_length must be positive")
         self._max_len = int(max_length)

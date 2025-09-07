@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+"""
+辞書との相互変換（シリアライズ/デシリアライズ）を提供する基底クラス。
+
+- ネストしたオブジェクトや型ヒント、dataclass/通常クラスの双方を扱います。
+"""
+
 import dataclasses
 import importlib
 import inspect
@@ -9,11 +15,7 @@ from src.modules.container.sequence_container import SequenceContainer
 
 
 class SerializableObject:
-    """Base class for objects that can be converted to/from dictionary representation.
-
-    Provides serialization and deserialization capabilities for Python objects,
-    supporting nested structures, type hints, and both dataclasses and regular classes.
-    """
+    """辞書への変換と、辞書からの復元を提供する基底クラス。"""
 
     # Keys for nested object markers
     instance_key: ClassVar[str] = "__instance__"  # accepted on input
@@ -24,23 +26,12 @@ class SerializableObject:
     # --- internal helpers ---
     @classmethod
     def _instance_field_names(cls) -> set[str]:
-        """Extract instance field names from type hints, excluding ClassVar fields.
-
-        Returns:
-            Set of field names that are instance attributes (not class variables).
-        """
+        """型ヒントからインスタンス属性の名前集合を抽出する（ClassVar除外）。"""
         hints = get_type_hints(cls, include_extras=True)
         return {k for k, t in hints.items() if get_origin(t) is not ClassVar}
 
     def _instance_dict(self) -> Dict[str, Any]:
-        """Extract instance attributes as a dictionary.
-
-        Uses type hints when available, falls back to __dict__ or __slots__.
-        Class variables are intentionally ignored.
-
-        Returns:
-            Dictionary mapping attribute names to their values.
-        """
+        """インスタンス属性を辞書として取得する（型ヒント/`__dict__`/`__slots__` を使用）。"""
         # Use type hints when available (only attributes that exist)
         names = type(self)._instance_field_names()
         if names:
@@ -61,26 +52,12 @@ class SerializableObject:
     # --- public API ---
     @classmethod
     def _type_to_string(cls, tp: type) -> str:
-        """Convert a type to a string representation for serialization.
-
-        Args:
-            tp: The type to convert.
-
-        Returns:
-            String in format 'module_name:ClassName'.
-        """
+        """型を 'module:Class' 形式の文字列へ変換する。"""
         return f"{tp.__module__}:{tp.__qualname__}"
 
     @classmethod
     def _type_from_string(cls, s: str) -> type:
-        """Convert a string representation back to a type.
-
-        Args:
-            s: String in format 'module_name:ClassName'.
-
-        Returns:
-            The reconstructed type object.
-        """
+        """'module:Class' 形式の文字列から型を復元する。"""
         module, qual = s.split(":", 1)
         mod = importlib.import_module(module)
         obj: Any = mod
@@ -96,16 +73,7 @@ class SerializableObject:
         include_class_vars: bool,
         annotated_class_only: bool,
     ) -> Any:
-        """Recursively serialize a value, handling nested SerializableObject objects.
-
-        Args:
-            value: The value to serialize.
-            include_class_vars: Whether to include class variables (currently ignored).
-            annotated_class_only: Whether to only process annotated classes.
-
-        Returns:
-            Serialized representation of the value.
-        """
+        """値を再帰的にシリアライズする（SerializableObject/コンテナに対応）。"""
         # SerializableObject instance
         if isinstance(value, SerializableObject):
             return {
@@ -164,17 +132,7 @@ class SerializableObject:
 
     @classmethod
     def _decode_untyped(cls, value: Any) -> Any:
-        """Decode a value without type hints, using nested object markers.
-
-        Recursively processes containers and reconstructs SerializableObject objects
-        based on nested flags and type information.
-
-        Args:
-            value: The value to decode.
-
-        Returns:
-            Decoded Python object.
-        """
+        """型ヒントなしでネスト情報を頼りに復号する。"""
         # Wrapper produced by _deep_serialize
         if (
             isinstance(value, dict)
@@ -204,18 +162,7 @@ class SerializableObject:
 
     @classmethod
     def _decode_by_hint(cls, value: Any, hint: Any) -> Any:
-        """Decode a value using type hints for better type safety.
-
-        Uses type hints to guide the deserialization process, handling
-        generic types like List[T], Dict[K, V], and direct SerializableObject types.
-
-        Args:
-            value: The value to decode.
-            hint: Type hint to guide decoding.
-
-        Returns:
-            Decoded object with appropriate type.
-        """
+        """型ヒントを用いてより厳密に復号する（リスト/辞書/オブジェクト対応）。"""
         if hint is None:
             return cls._decode_untyped(value)
 
@@ -284,18 +231,7 @@ class SerializableObject:
         include_class_vars: bool = False,  # ignored; kept for compatibility
         annotated_class_only: bool = True,  # ignored for class vars
     ) -> Dict[str, Any]:
-        """Convert this object to a dictionary representation.
-
-        Serializes the object's instance attributes to a dictionary,
-        recursively handling nested SerializableObject objects.
-
-        Args:
-            include_class_vars: Ignored, kept for compatibility.
-            annotated_class_only: Ignored for class vars.
-
-        Returns:
-            Dictionary representation of this object.
-        """
+        """このオブジェクトを辞書に変換する（入れ子も再帰的に処理）。"""
         inst_raw = self._instance_dict()
         inst = {
             k: type(self)._deep_serialize(
@@ -317,20 +253,7 @@ class SerializableObject:
         annotated_class_only: bool = True,
         ignore_unknown: bool = False,
     ) -> Self:
-        """Create an instance of this class from a dictionary representation.
-
-        Deserializes a dictionary back into an object instance, handling
-        nested objects and type hints appropriately.
-
-        Args:
-            data: Dictionary containing the object data.
-            set_class_vars: Ignored, kept for compatibility.
-            annotated_class_only: Whether to only process annotated classes.
-            ignore_unknown: Whether to ignore unknown fields.
-
-        Returns:
-            New instance of this class initialized with the dictionary data.
-        """
+        """辞書からインスタンスを復元する（型ヒント/入れ子に対応）。"""
         # 1) Determine dict layout (prefer nested instance key). Class vars ignored.
         if cls.instance_key in data:
             inst_part = data.get(cls.instance_key, {}) or {}

@@ -1,5 +1,10 @@
 from typing import Self
 
+"""
+HDF5 へ保存・復元できるシーケンスコンテナ。
+要素は HDF5IO インタフェースを実装している必要があります。
+"""
+
 import h5py
 
 from src.modules.container.hdf5_io import HDF5IO
@@ -7,20 +12,10 @@ from src.modules.container.sequence_container import SequenceContainer
 
 
 class SerializableContainerList[T](SequenceContainer[T], HDF5IO):
-    """A sequence container that can be serialized to HDF5 format.
-
-    This class assumes that all elements implement the HDF5IO interface.
-    """
+    """HDF5 シリアライズに対応したシーケンスコンテナ。"""
 
     def to_hdf5_group(self, group: h5py.Group) -> h5py.Group:
-        """Write this list to an HDF5 group.
-
-        Args:
-            group: HDF5 group to write data into.
-
-        Returns:
-            The HDF5 group that was written to.
-        """
+        """このリストを HDF5 グループへ書き込む。"""
         # Store metadata
         group.attrs["__TYPE__"] = "SerializableContainerList"
         group.attrs["__LENGTH__"] = len(self._data)
@@ -41,14 +36,7 @@ class SerializableContainerList[T](SequenceContainer[T], HDF5IO):
 
     @classmethod
     def from_hdf5_group(cls, group: h5py.Group) -> Self:
-        """Create a list from HDF5 group data.
-
-        Args:
-            group: HDF5 group containing the list data.
-
-        Returns:
-            New instance of this class restored from HDF5 data.
-        """
+        """HDF5 グループからリストを復元する。"""
         # Check if this is the correct type
         if group.attrs.get("__TYPE__") != "SerializableContainerList":
             raise TypeError("Group does not contain SerializableContainerList data")
@@ -82,23 +70,12 @@ class SerializableContainerList[T](SequenceContainer[T], HDF5IO):
         return cls(items)
 
     def save_as_hdf5(self, file_path: str) -> None:
-        """Save this list to an HDF5 file.
-
-        Args:
-            file_path: Path to the HDF5 file to create.
-        """
+        """このリストを HDF5 ファイルへ保存する。"""
         with h5py.File(file_path, "w") as f:
             self.to_hdf5_group(f)
 
     @classmethod
     def load_from_hdf5(cls, file_path: str) -> Self:
-        """Load a list from an HDF5 file.
-
-        Args:
-            file_path: Path to the HDF5 file to read from.
-
-        Returns:
-            New instance of this class loaded from the file.
-        """
+        """HDF5 ファイルから読み込み、新しいインスタンスを返す。"""
         with h5py.File(file_path, "r") as f:
             return cls.from_hdf5_group(f)

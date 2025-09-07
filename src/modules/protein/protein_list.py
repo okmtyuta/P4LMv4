@@ -10,45 +10,26 @@ from src.modules.protein.protein_types import ProteinProps
 
 
 class ProteinList(SerializableContainerList[Protein]):
-    """Sequence container for handling collections of Protein objects.
-
-    This class extends SerializableContainerList to provide specialized functionality
-    for working with protein data, including CSV loading capabilities and HDF5 I/O.
-    Inherits all list-like operations from SequenceContainer and HDF5 I/O from HDF5IO.
-    """
+    """Protein を格納するシーケンスコンテナ（HDF5/辞書I/O対応）。"""
 
     def __init__(self, iterable: Iterable[Protein]) -> None:
-        """Initialize ProteinList with an iterable of Protein objects.
-
-        Args:
-            iterable: Iterable of Protein objects
-        """
+        """Protein の列で初期化する。"""
         super().__init__(iterable)
 
     @classmethod
     def from_csv(cls, path: str) -> "ProteinList":
-        """Load ProteinList from CSV file using Polars.
-
-        The 'index' column will be used as the key, and all other columns
-        including 'seq' will be stored in props for each protein.
-
-        Args:
-            path: Path to the CSV file
-
-        Returns:
-            ProteinList containing Protein instances from CSV data
-        """
+        """CSV から ProteinList を構築する（カラム 'index' を key に使用）。"""
         df = pl.read_csv(path)
 
         proteins = []
         for row in df.iter_rows(named=True):
-            # Use index as key
+            # index を key に採用
             key = str(row["index"])
 
-            # All columns including seq go to props (except index)
+            # 'seq' を含むすべてのカラムを props へ（index は除外）
             props: ProteinProps = {k: v for k, v in row.items() if k != "index"}
 
-            # Create Protein Directly
+            # 直接 Protein を生成
             protein = Protein(key=key, props=props, representations=None, processed=None, predicted={})
             proteins.append(protein)
 

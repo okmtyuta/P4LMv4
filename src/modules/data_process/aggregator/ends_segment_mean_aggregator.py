@@ -12,6 +12,7 @@ class EndsSegmentMeanAggregator(DataProcess):
     """先頭N・中央・末尾M の平均を連結して返す非学習 Aggregator。"""
 
     def __init__(self, head_len: int, tail_len: int) -> None:
+        """先頭と末尾の使用長を指定して初期化する。"""
         if head_len < 0 or tail_len < 0:
             raise ValueError("head_len and tail_len must be non-negative")
         self._head = int(head_len)
@@ -19,6 +20,7 @@ class EndsSegmentMeanAggregator(DataProcess):
 
     @property
     def dim_factor(self) -> int:  # 出力は [head, center, tail] の連結で 3D
+        """出力次元は 3 倍。"""
         return 3
 
     def _safe_mean(self, x: torch.Tensor) -> torch.Tensor:

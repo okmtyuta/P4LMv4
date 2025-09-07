@@ -15,6 +15,7 @@ class _BaseLearnableRoPEPositionalEncoder(DataProcess):
     """学習可能な RoPE 基底クラス。ペアごとの周波数を学習する。"""
 
     def __init__(self, dim: int, theta_base: float) -> None:
+        """特徴次元と基底スケールを受け取り初期化する。"""
         if dim <= 0:
             raise ValueError("dim must be positive")
         self._D = int(dim)
@@ -48,6 +49,7 @@ class _BaseLearnableRoPEPositionalEncoder(DataProcess):
     def _cos_sin(
         self, length: int, reversed: bool, device: torch.device, dtype: torch.dtype
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """cos/sin 行列を返す。half==0 の場合は空を返す。"""
         if self._half == 0:
             cos = torch.ones((length, 0), dtype=dtype, device=device)
             sin = torch.zeros((length, 0), dtype=dtype, device=device)
@@ -84,25 +86,35 @@ class _BaseLearnableRoPEPositionalEncoder(DataProcess):
 
 
 class LearnableRoPEPositionalEncoder(_BaseLearnableRoPEPositionalEncoder):
+    """通常順序の学習型 RoPE を適用する。"""
+
     def _act(self, protein: Protein) -> Protein:
+        """通常順序の回転を適用する。"""
         x = protein.get_processed()  # (L, D)
         out = self._apply_rope(x, False)
         return protein.set_processed(processed=out)
 
 
 class ReversedLearnableRoPEPositionalEncoder(_BaseLearnableRoPEPositionalEncoder):
+    """逆順序の学習型 RoPE を適用する。"""
+
     def _act(self, protein: Protein) -> Protein:
+        """逆順序の回転を適用する。"""
         x = protein.get_processed()
         out = self._apply_rope(x, True)
         return protein.set_processed(processed=out)
 
 
 class BidirectionalLearnableRoPEPositionalEncoder(_BaseLearnableRoPEPositionalEncoder):
+    """通常/逆順を連結し、出力次元を 2 倍にする。"""
+
     @property
     def dim_factor(self) -> int:  # 2D へ拡張
+        """出力次元は 2 倍。"""
         return 2
 
     def _act(self, protein: Protein) -> Protein:
+        """両方向の結果を連結した (L, 2D) を生成する。"""
         x = protein.get_processed()
         out_n = self._apply_rope(x, False)
         out_r = self._apply_rope(x, True)

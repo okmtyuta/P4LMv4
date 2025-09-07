@@ -14,6 +14,7 @@ class SequenceContainer[T]:
     """list 互換の操作を型安全に提供する汎用シーケンスコンテナ。"""
 
     def __init__(self, iterable: Iterable[T]) -> None:
+        """要素列で初期化する。"""
         self._data = list(iterable)
 
     # === Basic Properties ===
@@ -47,10 +48,12 @@ class SequenceContainer[T]:
     # === Item Access ===
     @overload
     def __getitem__(self, i: int) -> T:
+        """単一インデックスアクセス。"""
         pass
 
     @overload
     def __getitem__(self, s: slice) -> Self:
+        """スライスアクセスで同型の部分コンテナを返す。"""
         pass
 
     def __getitem__(self, key: int | slice) -> T | Self:

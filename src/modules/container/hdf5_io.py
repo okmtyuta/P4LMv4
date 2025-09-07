@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""
+HDF5 との入出力インタフェース定義。
+"""
 from abc import ABC, abstractmethod
 from typing import Self
 
