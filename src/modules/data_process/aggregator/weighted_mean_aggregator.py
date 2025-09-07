@@ -1,14 +1,9 @@
-r"""
-内容ベース＋位置バイアスで重み付け平均する Aggregator。
+"""
+内容スコアと位置バイアスを組み合わせ、softmax 重みで平均をとる Aggregator。
 
-- 重みは softmax により正規化される。
-- 位置バイアスは `max_length` まで学習し、それ以降は末尾値を再利用。
-- 温度は softplus で正値に制約。
-
-数式（位置 p, 特徴 x_p ∈ R^D）:
-  - スコア: $$s_p = \frac{x_p \cdot v}{\tau} + b_p$$
-  - 重み: $$w_p = \operatorname{softmax}_p(s)$$
-  - 出力: $$y = \sum_p w_p\, x_p$$
+- 内容スコア: 内積（特徴と学習ベクトル）を温度でスケーリング。
+- 位置バイアス: シーケンス位置ごとの学習スカラ（`max_length` 超は末尾値を再利用）。
+- 重みは長さ方向で softmax 正規化し、加重平均を求めます。
 """
 
 from typing import List

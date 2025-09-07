@@ -1,3 +1,7 @@
+"""
+絶対位置ごとに学習可能な加算/スケールを適用するエンコーダ。
+"""
+
 from typing import List
 
 import torch
@@ -8,15 +12,7 @@ from src.modules.protein.protein import Protein
 
 
 class LearnableAbsolutePositionalAdder(DataProcess):
-    """Add a learnable absolute positional bias per position (scalar per position).
-
-    For a sequence of length L and representations reps (L, D), this adds a scalar
-    bias b[p] to every channel at position p (0-indexed internally).
-
-    - Parameters are defined up to `max_length`. If L > max_length, the last bias
-      value (b[max_length-1]) is reused for positions beyond max_length.
-    - Initialized with zeros so the initial transform is identity.
-    """
+    """位置 p ごとに学習スカラのバイアス b[p] を加える。"""
 
     def __init__(self, max_length: int) -> None:
         if max_length <= 0:
@@ -25,13 +21,16 @@ class LearnableAbsolutePositionalAdder(DataProcess):
         self._bias = nn.Parameter(torch.zeros(self._max_len, dtype=torch.float32))
 
     def parameters(self) -> List[nn.Parameter]:  # type: ignore[override]
+        """学習対象のバイアスベクトルを返す。"""
         return [self._bias]
 
     @property
     def dim_factor(self) -> int:
+        """出力次元は D（=1倍）。"""
         return 1
 
     def _act(self, protein: Protein) -> Protein:
+        """各位置にバイアスを加算する。"""
         reps = protein.get_processed()  # (L, D)
         L, _D = reps.shape
 
@@ -49,15 +48,7 @@ class LearnableAbsolutePositionalAdder(DataProcess):
 
 
 class LearnableAbsolutePositionalScaler(DataProcess):
-    """Apply a learnable absolute positional scale per position (scalar per position).
-
-    For a sequence of length L and representations reps (L, D), this multiplies
-    reps[p, :] by a gate g[p] = 1 + s[p], where s[p] is a learnable scalar. Using
-    zero initialization yields identity at start of training.
-
-    - Parameters are defined up to `max_length`. If L > max_length, the last scale
-      value is reused for positions beyond max_length.
-    """
+    """位置 p ごとにゲート g[p]=1+s[p] を掛ける（s[p] は学習スカラ）。"""
 
     def __init__(self, max_length: int) -> None:
         if max_length <= 0:
@@ -66,13 +57,16 @@ class LearnableAbsolutePositionalScaler(DataProcess):
         self._scale = nn.Parameter(torch.zeros(self._max_len, dtype=torch.float32))
 
     def parameters(self) -> List[nn.Parameter]:  # type: ignore[override]
+        """学習対象のスケールベクトルを返す。"""
         return [self._scale]
 
     @property
     def dim_factor(self) -> int:
+        """出力次元は D（=1倍）。"""
         return 1
 
     def _act(self, protein: Protein) -> Protein:
+        """各位置にスケールを乗算する。"""
         reps = protein.get_processed()  # (L, D)
         L, _D = reps.shape
 

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import torch
-from schedulefree import RAdamScheduleFree  # type: ignore[import-untyped]
+from schedulefree import RAdamScheduleFree
 
 from src.modules.data_process.aggregator import Aggregator
 from src.modules.data_process.data_process_list import DataProcessList

@@ -2,10 +2,7 @@
 評価指標の計算ユーティリティ。
 
 - MSE / RMSE / MAE / Pearson 相関を提供します。
-- 数式：
-  - $$\mathrm{MSE}(\hat{y}, y) = \frac{1}{N}\sum_{i=1}^{N} \left(\hat{y}_i - y_i\right)^2$$
-  - $$\mathrm{RMSE}(\hat{y}, y) = \sqrt{\mathrm{MSE}(\hat{y}, y)}$$
-  - $$\mathrm{MAE}(\hat{y}, y) = \frac{1}{N}\sum_{i=1}^{N} \left\lvert \hat{y}_i - y_i \right\rvert$$
+- Pythonファイル上では数式表記を避け、目的と戻り値のみ簡潔に記述します。
 """
 
 from typing import Literal, TypedDict
@@ -40,7 +37,7 @@ class Criterion:
 
     @classmethod
     def root_mean_squared_error(cls, output: torch.Tensor, label: torch.Tensor) -> torch.Tensor:
-        """RMSE を返す（$$\sqrt{\mathrm{MSE}}$$）。"""
+        """RMSE を返す。"""
         loss: torch.Tensor = cls.mean_squared_error(output=output, label=label).sqrt()
         return loss
 

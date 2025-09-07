@@ -1,3 +1,7 @@
+"""
+学習可能 RoPE（周波数を学習する回転位置エンコード）。
+"""
+
 from typing import List
 
 import torch
@@ -8,12 +12,7 @@ from src.modules.protein.protein import Protein
 
 
 class _BaseLearnableRoPEPositionalEncoder(DataProcess):
-    """Learnable Rotary Positional Embedding (RoPE).
-
-    - 周波数ベクトル `inv_freq` を学習（ペアごとに1つ）。
-    - 入力は `Protein.get_processed()` を読み、逐次合成に対応。
-    - 偶数ペアごとに2次元回転を適用、奇数次元末尾はそのまま。
-    """
+    """学習可能な RoPE 基底クラス。ペアごとの周波数を学習する。"""
 
     def __init__(self, dim: int, theta_base: float) -> None:
         if dim <= 0:
@@ -33,12 +32,15 @@ class _BaseLearnableRoPEPositionalEncoder(DataProcess):
 
     @property
     def dim_factor(self) -> int:
+        """出力次元は D（=1倍）。"""
         return 1
 
     def parameters(self) -> List[nn.Parameter]:  # type: ignore[override]
+        """学習対象の周波数パラメータを返す。"""
         return [self._log_inv_freq]
 
     def _positions(self, length: int, reversed: bool, device: torch.device, dtype: torch.dtype) -> torch.Tensor:
+        """位置ベクトル（1..L もしくは L..1）を生成。"""
         if reversed:
             return torch.arange(length, 0, -1, dtype=dtype, device=device)
         return torch.arange(1, length + 1, dtype=dtype, device=device)
@@ -59,6 +61,7 @@ class _BaseLearnableRoPEPositionalEncoder(DataProcess):
         return torch.cos(angles), torch.sin(angles)
 
     def _apply_rope(self, x: torch.Tensor, reversed: bool) -> torch.Tensor:
+        """回転を適用して同形状のテンソルを返す。"""
         L, D = x.shape
         if D != self._D:
             raise ValueError(f"dimension mismatch: expected {self._D}, got {D}")

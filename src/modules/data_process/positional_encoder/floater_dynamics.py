@@ -1,3 +1,10 @@
+"""
+FLOATER のダイナミクス（時間埋め込み + ゲート付きMLP + 減衰）。
+
+- 時間 t を複数周波数の sin/cos によって埋め込み、現在状態と結合して MLP で勾配を計算します。
+- 減衰パラメータは ReLU で非負に保ち、数値安定性を確保します。
+"""
+
 import math
 from typing import Final
 
@@ -6,14 +13,7 @@ from torch import nn
 
 
 class SimpleGatedSineDynamics(nn.Module):
-    """時間埋め込み(sin/cos) + ゲート付きMLP + 減衰項のシンプルな連続力学。
-
-    dy/dt = W2·SiLU(W1·y + V·phi(t)) - lambda·y
-
-    - `phi(t)` は `omega` を対数均等配置した複数周波数の `sin, cos` 連結。
-    - 減衰 `lambda` は ReLU により非負に制約して安定性を確保。
-    - FLOATER の `dim` と一致するように初期化してください。
-    """
+    """時間埋め込み(sin/cos) + ゲート付きMLP + 減衰項の連続力学。"""
 
     def __init__(
         self,
@@ -52,6 +52,7 @@ class SimpleGatedSineDynamics(nn.Module):
         self._reset_parameters()
 
     def _reset_parameters(self) -> None:
+        """パラメータ初期化（Xavier, ゼロバイアス）。"""
         nn.init.xavier_uniform_(self._fc_y.weight)
         nn.init.zeros_(self._fc_y.bias)
         nn.init.xavier_uniform_(self._fc_t.weight)
@@ -59,12 +60,14 @@ class SimpleGatedSineDynamics(nn.Module):
         nn.init.zeros_(self._fc_out.bias)
 
     def _time_embed(self, t: torch.Tensor) -> torch.Tensor:
+        """時間 t を sin/cos の連結ベクトルに変換する。"""
         # t: () or (1,), returns (2*num_freqs,)
         t = t.to(dtype=self._omegas.dtype)
         wt = self._omegas * t
         return torch.cat([torch.sin(wt), torch.cos(wt)], dim=0)
 
     def forward(self, t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
+        """連続力学の右辺を計算し、時間微分ベクトルを返す。"""
         te = self._time_embed(t)
         z = self._fc_y(y) + self._fc_t(te)
         h = torch.nn.functional.silu(z)

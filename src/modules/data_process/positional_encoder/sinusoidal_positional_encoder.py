@@ -1,3 +1,7 @@
+"""
+サイン波に基づく簡易位置エンコード（双方向/反転も提供）。
+"""
+
 import torch
 
 from src.modules.data_process.data_process import DataProcess
@@ -18,6 +22,8 @@ class SinusoidalPositionalEncoderCache:
 
 
 class _BaseSinusoidalPositionalEncoder(DataProcess):
+    """サイン波位置エンコードの共通実装。"""
+
     def __init__(self, a: float, b: float, gamma: float) -> None:
         self._a = a
         self._b = b

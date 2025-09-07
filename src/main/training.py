@@ -12,13 +12,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from schedulefree import RAdamScheduleFree  # type: ignore[import-untyped]
+from schedulefree import RAdamScheduleFree
 
 from src.main.utils.runner import Runner, RunnerConfig
-from src.modules.data_process.data_process_list import DataProcessList
-from src.modules.dataloader.dataloader import Dataloader, DataloaderConfig
+from src.modules.dataloader.dataloader import Dataloader
 from src.modules.model.model import Model
-from src.modules.protein.protein_list import ProteinList
 from src.modules.services import SlackService
 from src.modules.services.platform import PlatformService
 from src.modules.train.recorder import TrainRecorder
@@ -37,12 +35,8 @@ class TrainingRunnerConfig(RunnerConfig):
     output_hdf5_path: str | Path
     dataset_name: str
 
-    # Dataloader 関連（data_process も外部から指定）
-    input_props: list[str]
-    output_props: list[str]
-    batch_size: int
-    cacheable: bool
-    process_list: DataProcessList
+    # Dataloader は外部から注入
+    dataloader: Dataloader
 
     # モデル/オプティマイザ（外部注入）
     model: Model
@@ -83,27 +77,21 @@ class TrainingRunner(Runner):
         # Slack 通知（開始）
         try:
             server = PlatformService.server_name()
-            fname = Path(cfg.input_hdf5_path).name
-            SlackService().send(text=f"[TRAIN START] server={server} config={cfg.dataset_name} file={fname}")
+            text = "\n".join(
+                [
+                    "[TRAIN START]",
+                    f"server={server}",
+                    f"dataset_name={cfg.dataset_name}",
+                    f"file={cfg.input_hdf5_path}",
+                ]
+            )
+            SlackService().send(text=text)
         except Exception:
             # 通知失敗は学習に影響させない
             pass
 
-        # 1. データ読み込み（HDF5）+ シャッフル
-        print(f"Loading proteins from: {cfg.input_hdf5_path}")
-        protein_list = ProteinList.load_from_hdf5(str(cfg.input_hdf5_path)).shuffle(seed=cfg.shuffle_seed)
-        print(f"Loaded {len(protein_list)} proteins")
-
-        # 2. Dataloader 準備
-        dl_conf = DataloaderConfig(
-            protein_list=protein_list,
-            input_props=cfg.input_props,
-            output_props=cfg.output_props,
-            batch_size=cfg.batch_size,
-            cacheable=cfg.cacheable,
-            process_list=cfg.process_list,
-        )
-        dataloader = Dataloader(config=dl_conf)
+        # 1. 外部注入された Dataloader をそのまま利用
+        dataloader = cfg.dataloader
         # 3. モデル・オプティマイザ（外部注入済み）
         model = cfg.model
         optimizer = cfg.optimizer
@@ -114,7 +102,7 @@ class TrainingRunner(Runner):
         trainer._recorder = TrainRecorder(patience=cfg.patience)
 
         # 5. 学習
-        print(f"Training started: batch_size={cfg.batch_size}, patience={cfg.patience}")
+        print(f"Training started: batch_size={cfg.dataloader._config.batch_size}, patience={cfg.patience}")
         trainer.train()
 
         # 6. 保存（最良エポック含む履歴を HDF5 へ）
@@ -125,8 +113,11 @@ class TrainingRunner(Runner):
         # Slack 通知（終了）
         try:
             server = PlatformService.server_name()
-            fname = Path(cfg.input_hdf5_path).name
-            SlackService().send(text=f"[TRAIN END] server={server} config={cfg.dataset_name} file={fname}")
+
+            text = "\n".join(
+                ["[TRAIN END]", f"server={server}", f"dataset_name={cfg.dataset_name}, file={cfg.input_hdf5_path}"]
+            )
+            SlackService().send(text=text)
         except Exception:
             pass
 

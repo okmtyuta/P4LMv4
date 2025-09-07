@@ -1,3 +1,10 @@
+"""
+fair-esm の事前学習モデルを介して配列表現を取得するシンプルな変換器。
+
+- 入力: 文字列配列のリスト。
+- 出力: 各配列に対応する (L, D) の表現テンソル（CLS/SEP 除去済み）。
+"""
+
 import esm
 import torch
 
@@ -8,17 +15,20 @@ from src.modules.extract.language.esm.esm_types import (
 
 
 class ESMConverter:
+    """ESM モデルをラップし、配列→表現テンソルへ変換する。"""
+
     def __init__(self, model_name: ESMModelName):
         super().__init__()
         self._model_name = model_name
         self._model, self._alphabet = self._get_model_and_alphabet()
         self._batch_converter = self._alphabet.get_batch_converter()
 
-        # CPUで実行するように設定
+        # CPU で実行（必要なら外部で .to(device) する）
         self._model = self._model
         self._model.eval()
 
     def __call__(self, seqs: list[str]) -> list[torch.Tensor]:
+        """配列リストを受け取り、各要素の (L, D) 表現を返す。"""
         batch_tokens = self._batch_converter([(seq, seq) for seq in seqs])[2]
 
         # CPUで実行するように設定
@@ -40,9 +50,11 @@ class ESMConverter:
         return sequence_representations
 
     def _get_model_and_alphabet(self):
+        """モデルとアルファベット（Tokenizer）を取得。"""
         return self._get_model_alphabet()
 
     def _get_model_alphabet(self):
+        """モデル名に応じて適切な事前学習モデルを返す。"""
         if self._model_name == "esm2":
             return esm.pretrained.esm2_t33_650M_UR50D()
         if self._model_name == "esm1b":

@@ -1,3 +1,10 @@
+"""
+学習クエリを用いた注意プーリング集約。
+
+- 各クエリごとに長さ方向の softmax 重みを計算し、加重平均した (D,) を得ます。
+- これを K 個連結して (K·D,) を出力します。
+"""
+
 from typing import List
 
 import torch
@@ -8,15 +15,7 @@ from src.modules.protein.protein import Protein
 
 
 class AttentionPoolingAggregator(DataProcess):
-    """学習クエリによる注意プーリング集約。
-
-    - 入力: processed (L, D)
-    - 出力: (K·D,) （K個のプール結果を連結）
-    - パラメータ: 学習クエリ Q ∈ R^{K×D}
-    - スコア: s_{p,k} = (x_p · q_k) / τ（τ>0 は固定温度）
-    - 重み: w_{p,k} = softmax_p(s_{p,k})（長さ方向で正規化）
-    - 出力: y_k = Σ_p w_{p,k} x_p を k=1..K で連結
-    """
+    """学習クエリによる注意プーリング集約。"""
 
     def __init__(self, dim: int, num_queries: int, temperature: float) -> None:
         if dim <= 0:
@@ -34,13 +33,16 @@ class AttentionPoolingAggregator(DataProcess):
         self._Q = nn.Parameter(0.01 * torch.randn(self._K, self._D, dtype=torch.float32))
 
     def parameters(self) -> List[nn.Parameter]:  # type: ignore[override]
+        """学習クエリ行列 Q を返す。"""
         return [self._Q]
 
     @property
     def dim_factor(self) -> int:  # 出力は K×D
+        """出力次元は K 倍。"""
         return self._K
 
     def _act(self, protein: Protein) -> Protein:
+        """注意プーリングを適用して (K·D,) を出力する。"""
         x = protein.get_processed()  # (L, D)
         if x.ndim != 2:
             raise ValueError("processed must be a 2D tensor (L, D)")

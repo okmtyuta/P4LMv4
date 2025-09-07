@@ -1,3 +1,7 @@
+"""
+Positional Encoder パッケージのエクスポート。
+"""
+
 from .floater_positional_encoder import FloaterPositionalEncoder
 from .learnable_absolute_positional_encoder import (
     LearnableAbsolutePositionalAdder,

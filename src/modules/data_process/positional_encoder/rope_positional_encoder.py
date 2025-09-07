@@ -1,3 +1,10 @@
+"""
+RoPE（Rotary Positional Embedding）による位置エンコード。
+
+- 偶数ペアごとに2次元回転を適用し、奇数次元末尾はそのまま保持します。
+- 位置は 1..L（反転時は L..1）。
+"""
+
 import torch
 
 from src.modules.data_process.data_process import DataProcess
@@ -5,7 +12,7 @@ from src.modules.protein.protein import Protein
 
 
 class RoPEAnglesCache:
-    """Cache for (cos, sin) angle tensors keyed by (length, dim, reversed)."""
+    """(length, dim, reversed) をキーに (cos, sin) を保持する簡易キャッシュ。"""
 
     def __init__(self) -> None:
         self._cache: dict[tuple[int, int, bool], tuple[torch.Tensor, torch.Tensor]] = {}
@@ -25,12 +32,7 @@ class RoPEAnglesCache:
 
 
 class _BaseRoPEPositionalEncoder(DataProcess):
-    """Rotary Positional Embedding (RoPE) applied to representations (L, D).
-
-    - D の偶数ペアごとに 2 次元平面回転を適用します。
-    - 奇数次元の場合、最後の 1 チャンネルはそのまま維持します。
-    - 位置は 1 始まり（1..L）。`reversed=True` の場合は L..1 の順序。
-    """
+    """(L, D) 表現へ RoPE を適用する基底クラス。"""
 
     def __init__(self, theta_base: float) -> None:
         self._theta_base = float(theta_base)
@@ -38,6 +40,7 @@ class _BaseRoPEPositionalEncoder(DataProcess):
 
     @property
     def dim_factor(self) -> int:
+        """出力次元は D（=1倍）。"""
         return 1
 
     def _positions(self, length: int, reversed: bool) -> torch.Tensor:
@@ -75,15 +78,7 @@ class _BaseRoPEPositionalEncoder(DataProcess):
         return cos, sin
 
     def _apply_rope(self, reps: torch.Tensor, reversed: bool) -> torch.Tensor:
-        """Apply RoPE rotation to representations.
-
-        Args:
-            reps: (L, D) tensor
-            reversed: whether to use reversed positions
-
-        Returns:
-            Rotated tensor with the same shape as reps.
-        """
+        """RoPE による回転を適用して同形状のテンソルを返す。"""
         L, D = reps.shape
         cos, sin = self._cos_sin(length=L, dim=D, reversed=reversed)  # (L, half)
         half = D // 2

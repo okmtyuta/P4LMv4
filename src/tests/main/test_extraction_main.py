@@ -31,6 +31,15 @@ class _FakeLanguage(_Language):
 
 
 def test_extraction_runner_smoke(monkeypatch, tmp_path):
+    # Slack 通知をテスト中は無効化
+    class _DummySlackService:
+        def __init__(self) -> None:
+            pass
+
+        def send(self, text: str) -> bool:
+            return True
+
+    monkeypatch.setattr("src.main.extraction.SlackService", _DummySlackService)
     # 言語モデル生成をスタブ化
     monkeypatch.setattr(
         ExtractionRunner,

@@ -1,3 +1,7 @@
+"""
+学習可能なフーリエ基底を用いてスカラーゲートを生成し、各位置の特徴に乗算するエンコーダ。
+"""
+
 import math
 from typing import List
 
@@ -9,20 +13,7 @@ from src.modules.protein.protein import Protein
 
 
 class LearnableFourierPositionalEncoder(DataProcess):
-    """Learnable Fourier positional gating.
-
-    For a sequence of length L with representations reps (L, D), this process builds
-    K learnable Fourier bases with frequencies w_k and phases φ_k, computes
-    Φ(p) = [sin(p·w_k + φ_k), cos(p·w_k + φ_k)]_{k=1..K} ∈ R^{2K} per position p (1..L),
-    then a scalar gating g(p) = 1 + s · Φ(p) · v, where v ∈ R^{2K} is learnable and s is
-    a fixed scale. The final output is out[p, :] = reps[p, :] * g(p).
-
-    Args:
-        num_bases: K, number of Fourier bases.
-        min_period: Minimum period (>0). Shortest wavelength ≈ min_period.
-        max_period: Maximum period (>min_period). Longest wavelength ≈ max_period.
-        projection_scale: s, scale factor for the projection output.
-    """
+    """学習可能な周波数・位相から時間特徴を作り、線形投影でスカラーを得て乗算する。"""
 
     def __init__(self, num_bases: int, min_period: float, max_period: float, projection_scale: float) -> None:
         if num_bases <= 0:
@@ -49,13 +40,16 @@ class LearnableFourierPositionalEncoder(DataProcess):
 
     # Optional helper to expose parameters for optimizers if統合する場合
     def parameters(self) -> List[nn.Parameter]:  # type: ignore[override]
+        """学習対象パラメータ（周波数・位相・射影）を返す。"""
         return [self._log_w, self._phase, self._proj]
 
     @property
     def dim_factor(self) -> int:
+        """出力次元は D（=1倍）。"""
         return 1
 
     def _act(self, protein: Protein) -> Protein:
+        """位置ごとにゲートを計算し、(L, D) に乗算する。"""
         reps = protein.get_representations()  # (L, D)
         L, _D = reps.shape
 

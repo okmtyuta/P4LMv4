@@ -16,6 +16,8 @@ from src.modules.extract.language.esm.esm1b import ESM1bLanguage
 from src.modules.extract.language.esm.esm2 import ESM2Language
 from src.modules.protein.protein_list import ProteinList
 from src.modules.protein.protein_types import ProteinLanguageName
+from src.modules.services import SlackService
+from src.modules.services.platform import PlatformService
 
 
 @dataclass
@@ -94,6 +96,21 @@ class ExtractionRunner(Runner):
         print(f"Starting extraction for dataset: {self.config.dataset_name}")
         print(f"Configuration: {self.config}")
 
+        # Slack 通知（開始）
+        try:
+            server = PlatformService.server_name()
+            text = "\n".join(
+                [
+                    "[EXTRACTION START]",
+                    f"server={server}",
+                    f"dataset_name={self.config.dataset_name}",
+                    f"file={self.config.csv_path}",
+                ]
+            )
+            SlackService().send(text=text)
+        except Exception:
+            pass
+
         # 1. CSVからProteinListを読み込み
         print(f"Loading protein data from: {self.config.csv_path}")
         protein_list = ProteinList.from_csv(str(self.config.csv_path))
@@ -122,5 +139,20 @@ class ExtractionRunner(Runner):
         print(f"Saving results to: {self.config.output_path}")
         extracted_protein_list.save_as_hdf5(str(self.config.output_path))
         print(f"ExtractionRunner completed successfully for {len(extracted_protein_list)} proteins")
+
+        # Slack 通知（終了）
+        try:
+            server = PlatformService.server_name()
+            text = "\n".join(
+                [
+                    "[EXTRACTION END]",
+                    f"server={server}",
+                    f"dataset_name={self.config.dataset_name}",
+                    f"file={self.config.csv_path}",
+                ]
+            )
+            SlackService().send(text=text)
+        except Exception:
+            pass
 
         return extracted_protein_list

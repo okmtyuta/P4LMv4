@@ -1,3 +1,10 @@
+"""
+FLOATER: ODE（常微分方程式）で得た連続状態を加算する位置エンコーダ。
+
+- 離散ステップごとの時刻に対して状態を解き、そのベクトルを入力表現に足し込みます。
+- 解法は `torchdiffeq` の `odeint` または `odeint_adjoint` を使用します。
+"""
+
 from typing import List
 
 import torch
@@ -9,22 +16,7 @@ from src.modules.protein.protein import Protein
 
 
 class FloaterPositionalEncoder(DataProcess):
-    """FLOATER: 連続力学系による位置エンコーディング（torchdiffeq で ODE を数値積分）。
-
-    - 連続状態 p(t) ∈ R^D を ODE: dp/dt = f(t, p; θ) で定義し、離散位置 i に対して
-      t_i = i·Δt の解 p(t_i) を加算的に注入: out[i] = x[i] + p(t_i)。
-    - f はユーザーが指定する `nn.Module`（`forward(t, y)` 形式）。
-    - ODE 解法は `torchdiffeq` の `odeint` または `odeint_adjoint` を利用。
-
-    Args:
-        dim: 特徴次元 D。
-        dynamics: `forward(t, y)->dy/dt` を満たす NN。
-        delta_t: Δt (>0)。
-        method: 例 `"dopri5"`, `"rk4"`, `"adams"` など。
-        rtol: 相対誤差許容。
-        atol: 絶対誤差許容。
-        use_adjoint: True なら `odeint_adjoint` を使用。
-    """
+    """連続力学系で生成した位置ベクトルを加算するエンコーダ。"""
 
     def __init__(
         self,
@@ -36,6 +28,17 @@ class FloaterPositionalEncoder(DataProcess):
         atol: float = 1e-6,
         use_adjoint: bool = False,
     ) -> None:
+        """パラメータを指定して初期化。
+
+        Args:
+            dim: 特徴次元 D。
+            dynamics: 右辺関数 `forward(t, y)->dy/dt` を満たす NN。
+            delta_t: 離散位置間隔（0より大きい）。
+            method: ODE ソルバ名（例: `rk4`, `dopri5`, `adams`）。
+            rtol: 相対誤差許容。
+            atol: 絶対誤差許容。
+            use_adjoint: 逆伝播で `odeint_adjoint` を用いるか。
+        """
         if dim <= 0:
             raise ValueError("dim must be positive")
         if delta_t <= 0.0:
@@ -57,13 +60,15 @@ class FloaterPositionalEncoder(DataProcess):
 
     @property
     def dim_factor(self) -> int:
+        """出力次元は D（=1倍）。"""
         return 1
 
     def parameters(self) -> List[nn.Parameter]:  # type: ignore[override]
-        # dynamics 側のパラメータも一緒に最適化できるよう expose
+        """ダイナミクスと初期値 p(0) の学習パラメータを返す。"""
         return list(self._dynamics.parameters()) + [self._p0]
 
     def _solve_states(self, L: int, device: torch.device, dtype: torch.dtype) -> torch.Tensor:
+        """系列長 L に対し、各時刻の状態ベクトルを数値的に解く。"""
         # t: [0, Δt, 2Δt, ..., LΔt] の (L+1,)。最初の 0 は p(0) 用。
         t = torch.arange(0, L + 1, dtype=dtype, device=device) * self._dt
         y0 = self._p0.to(device=device, dtype=dtype)
@@ -86,6 +91,7 @@ class FloaterPositionalEncoder(DataProcess):
         return y[1:, :]
 
     def _act(self, protein: Protein) -> Protein:
+        """系列長 L に応じて p(t_i) を求め、`processed` に加算する。"""
         reps = protein.get_processed()
         L, D = reps.shape
         if D != self._D:
