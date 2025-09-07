@@ -18,6 +18,7 @@ class ESMConverter:
     """ESM モデルをラップし、配列→表現テンソルへ変換する。"""
 
     def __init__(self, model_name: ESMModelName):
+        """モデル名を受け取り、モデルとアルファベットを用意する。"""
         super().__init__()
         self._model_name = model_name
         self._model, self._alphabet = self._get_model_and_alphabet()

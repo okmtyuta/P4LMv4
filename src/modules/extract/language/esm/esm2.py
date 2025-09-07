@@ -11,4 +11,5 @@ class ESM2Language(_ESMLanguage):
     name = "esm2"
 
     def __init__(self):
+        """基底クラスを ESM2 で初期化する。"""
         super().__init__("esm2")

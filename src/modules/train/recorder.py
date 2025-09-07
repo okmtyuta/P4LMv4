@@ -18,6 +18,7 @@ class TrainRecorder:
     """
 
     def __init__(self, patience: int = 50) -> None:
+        """猶予エポック数を受け取って初期化する。"""
         self._current_epoch: int = 1
         self._patience: int = patience
 

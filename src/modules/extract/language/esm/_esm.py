@@ -12,6 +12,7 @@ class _ESMLanguage(_Language):
     """ESM 変換器で `ProteinList` に表現を設定する言語モデル。"""
 
     def __init__(self, model_name: ESMModelName):
+        """指定モデル名の ESM 変換器を構築する。"""
         super().__init__()
         self._converter = ESMConverter(model_name=model_name)
 
