@@ -81,6 +81,7 @@ class SinusoidalPositionalEncoder(_BaseSinusoidalPositionalEncoder):
     """通常順序でサイン波エンコードを適用する。"""
 
     def _act(self, protein: Protein) -> Protein:
+        """処理済テンソルへサイン波重みを乗算する。"""
         reps = protein.get_processed()
         L, D = reps.shape
         pos = self._positional_tensor(length=L, dim=D, reversed=False)

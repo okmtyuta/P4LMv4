@@ -16,6 +16,7 @@ class LearnableFourierPositionalEncoder(DataProcess):
     """学習可能な周波数・位相から時間特徴を作り、線形投影でスカラーを得て乗算する。"""
 
     def __init__(self, num_bases: int, min_period: float, max_period: float, projection_scale: float) -> None:
+        """基底数と期間範囲、出力スケールを受け取り初期化する。"""
         if num_bases <= 0:
             raise ValueError("num_bases must be positive")
         if min_period <= 0 or max_period <= 0:

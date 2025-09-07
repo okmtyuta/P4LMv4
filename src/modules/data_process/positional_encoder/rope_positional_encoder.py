@@ -109,6 +109,7 @@ class RoPEPositionalEncoder(_BaseRoPEPositionalEncoder):
     """通常順序の RoPE を適用する。"""
 
     def _act(self, protein: Protein) -> Protein:
+        """処理済テンソルへ通常順序の RoPE 回転を適用する。"""
         reps = protein.get_processed()
         out = self._apply_rope(reps, False)
         return protein.set_processed(processed=out)

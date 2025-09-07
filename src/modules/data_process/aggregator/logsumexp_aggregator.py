@@ -25,6 +25,7 @@ class LogSumExpAggregator(DataProcess):
     """
 
     def __init__(self, tau: float) -> None:
+        """温度パラメータを指定して初期化する。"""
         if tau <= 0:
             raise ValueError("tau must be positive")
         self._tau = float(tau)

@@ -24,6 +24,7 @@ class SimpleGatedSineDynamics(nn.Module):
         omega_max: float,
         damping: float,
     ) -> None:
+        """特徴次元・隠れ次元・周波数本数・周波数範囲・減衰を指定して初期化する。"""
         super().__init__()
         if dim <= 0:
             raise ValueError("dim must be positive")

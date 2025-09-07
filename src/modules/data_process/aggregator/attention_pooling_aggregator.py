@@ -18,6 +18,7 @@ class AttentionPoolingAggregator(DataProcess):
     """学習クエリによる注意プーリング集約。"""
 
     def __init__(self, dim: int, num_queries: int, temperature: float) -> None:
+        """特徴次元・クエリ数・温度パラメータを指定して初期化する。"""
         if dim <= 0:
             raise ValueError("dim must be positive")
         if num_queries <= 0:

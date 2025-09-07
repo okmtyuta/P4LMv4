@@ -19,6 +19,7 @@ class WeightedMeanAggregator(DataProcess):
     """内容×位置スコアで重み付け平均を行う集約器。"""
 
     def __init__(self, dim: int, max_length: int) -> None:
+        """特徴次元と最大位置長を指定して初期化する。"""
         if dim <= 0:
             raise ValueError("dim must be positive")
         if max_length <= 0:
