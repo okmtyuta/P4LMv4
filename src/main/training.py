@@ -85,9 +85,8 @@ class TrainingRunner(Runner):
                 ]
             )
             SlackService().send(text=text)
-        except Exception:
-            # 通知失敗は学習に影響させない
-            pass
+        except Exception as e:
+            print(f'Slack send is failed because of {e}')
 
         # 1. 外部注入された Dataloader をそのまま利用
         dataloader = cfg.dataloader
@@ -117,7 +116,7 @@ class TrainingRunner(Runner):
                 ["[TRAIN END]", f"server={server}", f"dataset_name={cfg.dataset_name}, file={cfg.input_hdf5_path}"]
             )
             SlackService().send(text=text)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f'Slack send is failed because of {e}')
 
         return trainer._recorder

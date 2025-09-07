@@ -108,8 +108,8 @@ class ExtractionRunner(Runner):
                 ]
             )
             SlackService().send(text=text)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f'Slack send is failed because of {e}')
 
         # 1. CSVからProteinListを読み込み
         print(f"Loading protein data from: {self.config.csv_path}")
@@ -152,7 +152,7 @@ class ExtractionRunner(Runner):
                 ]
             )
             SlackService().send(text=text)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f'Slack send is failed because of {e}')
 
         return extracted_protein_list
