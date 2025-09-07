@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+Python の辞書/リスト/数値/文字列/bytes/torch.Tensor を汎用的に HDF5 へ保存・復元するユーティリティ。
+
+- dict はグループ、配列/テンソルはデータセットとして格納する。
+- 文字列、bytes、None、空リストなどの表現に属性マーカーを用いる。
+- 本クラスは中間表現として dict を受け取り/返す。
+"""
+
 from typing import Any, Mapping, Self, Sequence
 
 import h5py
@@ -9,50 +17,51 @@ from src.modules.container.hdf5_io import HDF5IO
 
 
 class Hdf5Container(HDF5IO):
-    """Serialize/deserialize Python dict structures to/from h5py.Group.
+    """h5py.Group との相互変換を提供する辞書コンテナ。
 
-    Attributes and markers used:
-    - __TYPE__: "list" for list containers
-    - __LENGTH__: 0 for empty lists
-    - __NONE__: True to mark a None placeholder group
-    - __BYTES__: True to mark a bytes dataset
-    - __ELEM_TYPE__: "bytes_uint8" to mark list elements stored as uint8
+    使用する属性マーカー:
+    - `__TYPE__`: "list"（リスト格納を示す）
+    - `__LENGTH__`: 0（空リスト）
+    - `__NONE__`: True（None プレースホルダ）
+    - `__BYTES__`: True（bytes を uint8 配列として保存）
+    - `__ELEM_TYPE__`: "bytes_uint8"（リスト要素が bytes であることを示す）
     """
 
     STR_DTYPE = h5py.string_dtype(encoding="utf-8")
 
     def __init__(self, source: Mapping[str, Any]) -> None:
-        """Initialize with a source dict to be written or held.
-
-        - For writing: call instance method to_hdf5_group(group) to persist this source.
-        - For reading: use Hdf5Container.from_hdf5_group(group) which returns an instance whose
-          _source holds the reconstructed dict.
-        """
+        """中間表現として保持/書き込み対象の dict を受け取る。"""
         # Take a shallow copy to snapshot current content
         self._source: Mapping[str, Any] = dict(source)
 
     # ------------ Private Methods ------------
     def _ensure_new_slot(self, g: h5py.Group, key: str) -> None:
+        """キーに `/` を含まないことを検査し、新規スロット作成の前提を整える。"""
         if "/" in key:
             raise ValueError(f"HDF5 key cannot contain '/': {key!r}")
 
     @staticmethod
     def _is_number_like(x: Any) -> bool:
+        """数値/真偽値/NumPy のスカラに類するかを判定する。"""
         return isinstance(x, (int, float, bool, np.integer, np.floating, np.bool_))
 
     @classmethod
     def _all_number_like(cls, seq: Sequence[Any]) -> bool:
+        """列の全要素が数値様であるか。"""
         return all(cls._is_number_like(x) for x in seq)
 
     @staticmethod
     def _all_str(seq: Sequence[Any]) -> bool:
+        """列の全要素が文字列か。"""
         return all(isinstance(x, str) for x in seq)
 
     @staticmethod
     def _all_bytes(seq: Sequence[Any]) -> bool:
+        """列の全要素が bytes/bytearray/np.void か。"""
         return all(isinstance(x, (bytes, bytearray, np.void)) for x in seq)
 
     def _put(self, g: h5py.Group, key: str, value: Any) -> None:
+        """与えられた Python 値を適切な HDF5 表現にエンコードして格納する。"""
         # dict
         if isinstance(value, Mapping):
             self._ensure_new_slot(g, key)
@@ -62,6 +71,7 @@ class Hdf5Container(HDF5IO):
 
         # torch.Tensor
         if isinstance(value, torch.Tensor):
+            """torch.Tensor は ndarray に変換し、dtype 情報を属性へ格納。"""
             self._ensure_new_slot(g, key)
             np_val = value.detach().cpu().numpy()
             ds = g.create_dataset(key, data=np_val)
@@ -134,11 +144,13 @@ class Hdf5Container(HDF5IO):
         raise TypeError(f"Unsupported type for key {key!r}: {type(value)}")
 
     def _write_into(self, group: h5py.Group, source: Mapping[str, Any]) -> None:
+        """辞書の各キー/値を HDF5 へ再帰的に書き込む。"""
         for k, v in source.items():
             self._put(group, str(k), v)
 
     @staticmethod
     def _dataset_to_python(ds: h5py.Dataset) -> Any:
+        """データセットを Python 値へ復号する。"""
         # Strings (variable-length UTF-8)
         if h5py.check_string_dtype(ds.dtype) is not None:
             data = ds.asstr()[...]
@@ -169,6 +181,7 @@ class Hdf5Container(HDF5IO):
 
     @classmethod
     def _group_to_python(cls, g: h5py.Group) -> Any:
+        """グループを再帰的に辿って Python 値へ復号する。"""
         # None marker
         if bool(g.attrs.get("__NONE__", False)):
             return None
@@ -197,25 +210,25 @@ class Hdf5Container(HDF5IO):
 
     # ------------ Public Methods ------------
     def to_hdf5_group(self, group: h5py.Group) -> h5py.Group:
-        """Write the initialized source into the given group recursively and return the group."""
+        """保持している辞書ソースを与えられたグループへ再帰的に書き込む。"""
         self._write_into(group, self._source)
         return group
 
     @classmethod
     def from_hdf5_group(cls, group: h5py.Group) -> Self:
-        """Read from group and return a new instance with the loaded data."""
+        """グループから読み取り、新しいインスタンスを返す。"""
         source = cls._group_to_python(group)
         if not isinstance(source, dict):
             raise TypeError("Top-level object must be a dict to initialize Hdf5Container")
         return cls(source)
 
     def save_as_hdf5(self, file_path: str) -> None:
-        """Save this instance to an HDF5 file."""
+        """このインスタンスを HDF5 ファイルへ保存する。"""
         with h5py.File(file_path, "w") as f:
             self.to_hdf5_group(f)
 
     @classmethod
     def load_from_hdf5(cls, file_path: str) -> Self:
-        """Load data from an HDF5 file and return a new instance."""
+        """HDF5 ファイルから読み込み、新しいインスタンスを返す。"""
         with h5py.File(file_path, "r") as f:
             return cls.from_hdf5_group(f)

@@ -1,40 +1,47 @@
 from __future__ import annotations
 
+"""
+シーケンス要素を安全に扱うための汎用コンテナ基底クラス。
+
+- list 互換の操作（追加・削除・結合・スライス等）を提供します。
+- スライスや結合でも同型（サブクラス）を保つように設計されています。
+"""
+
 from typing import Any, Callable, Iterable, Iterator, Optional, Self, overload
 
 
 class SequenceContainer[T]:
-    """A generic sequence container that mimics list behavior with type safety."""
+    """list 互換の操作を型安全に提供する汎用シーケンスコンテナ。"""
 
     def __init__(self, iterable: Iterable[T]) -> None:
         self._data = list(iterable)
 
     # === Basic Properties ===
     def __len__(self) -> int:
-        """Return the number of elements in the container."""
+        """要素数を返す。"""
         return len(self._data)
 
     def __bool__(self) -> bool:
-        """Return True if container is not empty."""
+        """空でなければ True。"""
         return bool(self._data)
 
     @property
     def is_empty(self) -> bool:
-        """Return True if container is empty."""
+        """空なら True。"""
         return len(self._data) == 0
 
     # === Iteration ===
     def __iter__(self) -> Iterator[T]:
-        """Return an iterator over the elements."""
+        """要素のイテレータを返す。"""
         return iter(self._data)
 
     def __reversed__(self) -> Iterator[T]:
-        """Return a reverse iterator over the elements."""
+        """逆順イテレータを返す。"""
         return reversed(self._data)
 
     # === Membership ===
     def __contains__(self, item: T) -> bool:
-        """Return True if item is in the container."""
+        """要素が含まれていれば True。"""
         return item in self._data
 
     # === Item Access ===
@@ -47,7 +54,7 @@ class SequenceContainer[T]:
         pass
 
     def __getitem__(self, key: int | slice) -> T | Self:
-        """Get item(s) at the specified index or slice.
+        """指定位置もしくはスライスを取得する。
 
         スライス時はサブクラスの ``__init__`` を呼ばずに、
         同型インスタンスをシャローコピーして ``_data`` だけ差し替える。
@@ -65,7 +72,7 @@ class SequenceContainer[T]:
         return self._data[key]
 
     def __setitem__(self, key: int | slice, value: T | Iterable[T]) -> None:
-        """Set item(s) at the specified index or slice."""
+        """指定位置またはスライスに値を設定する。"""
         if isinstance(key, slice):
             if not isinstance(value, Iterable):
                 raise TypeError("can only assign an iterable to a slice")
@@ -76,96 +83,96 @@ class SequenceContainer[T]:
             self._data[key] = value  # type: ignore[assignment]
 
     def __delitem__(self, key: int | slice) -> None:
-        """Delete item(s) at the specified index or slice."""
+        """指定位置またはスライスを削除する。"""
         del self._data[key]
 
     # === Arithmetic Operations ===
     def __add__(self, other: Iterable[T]) -> Self:
-        """Return a new container with elements from this container and other."""
+        """自身と引数を連結した新しい同型コンテナを返す。"""
         return type(self)(self._data + list(other))
 
     def __radd__(self, other: Iterable[T]) -> Self:
-        """Return a new container with elements from other and this container."""
+        """引数を前、自身を後に連結した新しい同型コンテナを返す。"""
         return type(self)(list(other) + self._data)
 
     def __iadd__(self, other: Iterable[T]) -> Self:
-        """Extend this container with elements from other."""
+        """自身を引数要素で拡張し、自己を返す（破壊的）。"""
         self.extend(other)
         return self
 
     def __mul__(self, n: int) -> Self:
-        """Return a new container with elements repeated n times."""
+        """要素を n 回繰り返した新しい同型コンテナを返す。"""
         return type(self)(self._data * n)
 
     def __rmul__(self, n: int) -> Self:
-        """Return a new container with elements repeated n times."""
+        """要素を n 回繰り返した新しい同型コンテナを返す（右側演算）。"""
         return type(self)(n * self._data)
 
     def __imul__(self, n: int) -> Self:
-        """Repeat elements in this container n times."""
+        """要素を n 回繰り返し、自己を返す（破壊的）。"""
         self._data *= n
         return self
 
     # === String Representation ===
     def __str__(self) -> str:
-        """Return a string representation of the container."""
+        """簡易な文字列表現を返す。"""
         return f"SequenceContainer({self._data})"
 
     def __repr__(self) -> str:
-        """Return a detailed string representation of the container."""
+        """詳細な文字列表現を返す。"""
         return f"SequenceContainer({self._data!r})"
 
     # === Modification Operations ===
     def append(self, item: T) -> None:
-        """Add an item to the end of the container."""
+        """末尾に要素を追加する。"""
         self._data.append(item)
 
     def insert(self, index: int, item: T) -> None:
-        """Insert an item at the specified index."""
+        """指定位置に要素を挿入する。"""
         self._data.insert(index, item)
 
     def remove(self, item: T) -> None:
-        """Remove the first occurrence of item from the container."""
+        """最初の一致要素を削除する。"""
         self._data.remove(item)
 
     def pop(self, index: int = -1) -> T:
-        """Remove and return the item at the specified index (default: last)."""
+        """指定位置の要素を取り除き返す（既定は末尾）。"""
         return self._data.pop(index)
 
     def clear(self) -> None:
-        """Remove all items from the container."""
+        """全要素を削除する。"""
         self._data.clear()
 
     def extend(self, iterable: Iterable[T]) -> None:
-        """Add all items from iterable to the end of the container."""
+        """イテラブルの要素を末尾に追加する。"""
         self._data.extend(iterable)
 
     def reverse(self) -> None:
-        """Reverse the elements in the container in place."""
+        """要素順を反転する（破壊的）。"""
         self._data.reverse()
 
     def sort(self, *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False) -> None:
-        """Sort the elements in the container in place."""
+        """要素を並べ替える（破壊的）。"""
         self._data.sort(key=key, reverse=reverse)
 
     # === Search and Count Operations ===
     def index(self, item: T, start: int = 0, stop: Optional[int] = None) -> int:
-        """Return the index of the first occurrence of item."""
+        """最初に出現する位置を返す。範囲を指定可能。"""
         if stop is None:
             return self._data.index(item, start)
         return self._data.index(item, start, stop)
 
     def count(self, item: T) -> int:
-        """Return the number of occurrences of item in the container."""
+        """要素の出現回数を返す。"""
         return self._data.count(item)
 
     # === Utility Methods ===
     def copy(self) -> Self:
-        """Return a shallow copy of the container."""
+        """浅いコピーを返す。"""
         return type(self)(self._data)
 
     def to_list(self) -> list[T]:
-        """Return a copy of the internal list."""
+        """内部リストのコピーを返す。"""
         return self._data.copy()
 
     def replace(self, iterable: Iterable[T]) -> Self:
@@ -184,15 +191,15 @@ class SequenceContainer[T]:
 
     # === Advanced Operations ===
     def filter(self, predicate: Callable[[T], bool]) -> Self:
-        """Return a new container with elements that satisfy the predicate."""
+        """述語を満たす要素のみからなる新しい同型コンテナを返す。"""
         return type(self)(item for item in self._data if predicate(item))
 
     def map(self, func: Callable[[T], Any]) -> "SequenceContainer[Any]":
-        """Return a new container with function applied to each element."""
+        """各要素へ関数を適用した結果のコンテナを返す。"""
         return SequenceContainer(func(item) for item in self._data)
 
     def reduce(self, func: Callable[[Any, T], Any], initial: Any = None) -> Any:
-        """Reduce the container to a single value using the function."""
+        """関数で畳み込み単一値へ還元する。"""
         if initial is not None:
             result = initial
             for item in self._data:
@@ -208,16 +215,16 @@ class SequenceContainer[T]:
 
     # === Split Operations ===
     def split_equal(self, n: int) -> list[Self]:
-        """Split container into n equal parts (or as equal as possible).
+        """ほぼ等分となるよう n 分割する。
 
         Args:
-            n: Number of parts to split into.
+            n: 分割数（正の整数）。
 
         Returns:
-            List of containers of the same type as self.
+            同型の部分コンテナのリスト。
 
         Raises:
-            ValueError: If n <= 0.
+            ValueError: n が正でない場合。
         """
         if n <= 0:
             raise ValueError("Number of parts must be positive")
@@ -226,17 +233,16 @@ class SequenceContainer[T]:
         return self.split_by_ratio([1] * n)
 
     def split_by_ratio(self, ratios: list[float]) -> list[Self]:
-        """Split container by the given ratios.
+        """与えた比率に従って分割する。
 
         Args:
-            ratios: List of integers representing the ratio for each part.
-                   e.g., [1, 3, 4] means split in ratio 1:3:4
+            ratios: 各部分の比率（例: [1, 3, 4]）。
 
         Returns:
-            List of containers of the same type as self.
+            同型の部分コンテナのリスト。
 
         Raises:
-            ValueError: If ratios contains non-positive values.
+            ValueError: 比率に正でない値が含まれる場合。
         """
 
         if any(r <= 0 for r in ratios):
@@ -268,9 +274,9 @@ class SequenceContainer[T]:
         return result
 
     def split_by_size(self, size: int) -> list[Self]:
-        """Split the container into chunks with at most `size` items each.
+        """最大 `size` を上限として順に分割する。
 
-        - 例えば要素数 100 を `size=30` で分割すると、サイズは [30, 30, 30, 10] となります。
+        - 例: 要素数100・size=30 → [30, 30, 30, 10]
 
         Args:
             size: 各分割片の最大要素数（正の整数）。
@@ -296,14 +302,7 @@ class SequenceContainer[T]:
 
     @classmethod
     def join(cls, containers: list[Self]) -> Self:
-        """Join multiple containers of the same type into one.
-
-        Args:
-            containers: List of containers to join.
-
-        Returns:
-            A new container of the same type containing all elements.
-        """
+        """同型コンテナ列を結合して 1 つにまとめる。"""
         # 空のコンテナから開始
         result = cls([])
 

@@ -1,3 +1,16 @@
+r"""
+内容ベース＋位置バイアスで重み付け平均する Aggregator。
+
+- 重みは softmax により正規化される。
+- 位置バイアスは `max_length` まで学習し、それ以降は末尾値を再利用。
+- 温度は softplus で正値に制約。
+
+数式（位置 p, 特徴 x_p ∈ R^D）:
+  - スコア: $$s_p = \frac{x_p \cdot v}{\tau} + b_p$$
+  - 重み: $$w_p = \operatorname{softmax}_p(s)$$
+  - 出力: $$y = \sum_p w_p\, x_p$$
+"""
+
 from typing import List
 
 import torch
@@ -8,16 +21,7 @@ from src.modules.protein.protein import Protein
 
 
 class WeightedMeanAggregator(DataProcess):
-    """内容×位置の学習スコアで重み付け平均を行う集約器。
-
-    - 入力: processed (L, D)
-    - 出力: (D,)
-    - 重み: w = softmax( (X @ v) / tau + b[pos] ) over 長さ次元
-      * v ∈ R^D: 内容ベースの投影ベクトル（学習）
-      * b ∈ R^{max_length}: 位置バイアス（学習, L>max_length は末尾再利用）
-      * tau > 0: 温度（学習, softplus で正値化）
-    初期化は平均に近い挙動（v≈0, b=0, tau=10）から開始。
-    """
+    """内容×位置スコアで重み付け平均を行う集約器。"""
 
     def __init__(self, dim: int, max_length: int) -> None:
         if dim <= 0:
@@ -34,13 +38,16 @@ class WeightedMeanAggregator(DataProcess):
         self._log_tau = nn.Parameter(torch.tensor(2.3025851, dtype=torch.float32))  # log(10) ≈ 2.3026
 
     def parameters(self) -> List[nn.Parameter]:  # type: ignore[override]
+        """学習対象パラメータを返す。"""
         return [self._v, self._b, self._log_tau]
 
     @property
     def dim_factor(self) -> int:
+        """出力次元は D（=1倍）。"""
         return 1
 
     def _act(self, protein: Protein) -> Protein:
+        """重み付け平均を計算し、(D,) ベクトルへ集約する。"""
         x = protein.get_processed()  # (L, D)
         L, D = x.shape
         if D != self._D:

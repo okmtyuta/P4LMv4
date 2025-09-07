@@ -1,3 +1,12 @@
+R"""
+温度付き LogSumExp による集約。
+
+定義:
+  - $$y = \tau\,\Big(\log\sum_{p} e^{x_p/\tau} - \log L\Big)$$
+  - \(\tau\) が大きいほど平均に近く、小さいほど最大に近い。
+  - \(-\log L\) を差し引くことで系列長に対してスケール不変。
+"""
+
 import math
 
 import torch
@@ -24,9 +33,11 @@ class LogSumExpAggregator(DataProcess):
 
     @property
     def dim_factor(self) -> int:
+        """出力次元は D（=1倍）。"""
         return 1
 
     def _act(self, protein: Protein) -> Protein:
+        """LogSumExp を適用して (D,) に集約する。"""
         x = protein.get_processed()  # (L, D)
         if x.ndim != 2:
             raise ValueError("processed must be a 2D tensor (L, D)")

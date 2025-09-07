@@ -1,3 +1,10 @@
+"""
+学習ループ本体（Trainer）。
+
+- DataLoader を train/validate/evaluate に 8:1:1 比率で分割し、各フェーズを順に実行。
+- RAdamScheduleFree を最適化器として想定（`optimizer` が同等 API であれば他でも可）。
+"""
+
 import torch
 from schedulefree import RAdamScheduleFree
 
@@ -10,7 +17,10 @@ from src.modules.train.train_result import EpochPhaseResult, EpochSummary
 
 
 class Trainer:
+    """モデル・データローダ・最適化器を束ねて学習を進める。"""
+
     def __init__(self, model: Model, dataloader: Dataloader, optimizer: RAdamScheduleFree):
+        """コンストラクタ。学習/検証/評価のデータ分割も行う。"""
         self._model = model
 
         self._dataloader = dataloader
@@ -25,6 +35,7 @@ class Trainer:
         self._recorder = TrainRecorder()
 
     def _batch_predict(self, batch: DataBatch, backward: bool = False):
+        """1 バッチの順伝播（必要に応じて逆伝播）。"""
         self._optimizer.zero_grad()
         input, label, protein_list = batch.use()
 
@@ -37,6 +48,7 @@ class Trainer:
         return label, output, protein_list
 
     def _epoch_predict(self, dataloader: Dataloader, backward: bool = False):
+        """指定ローダーに対して 1 エポック分の推論を実行。"""
         batch_labels: list[torch.Tensor] = []
         batch_outputs: list[torch.Tensor] = []
         batch_protein_lists: list[ProteinList] = []
@@ -67,6 +79,7 @@ class Trainer:
         return epoch_result
 
     def train(self) -> None:
+        """早期停止条件を満たすまでエポックを進める。"""
         # self.recorder.timer.start()
         while self._recorder.to_continue():
             train_epoch_result = self._epoch_predict(dataloader=self._train_loader, backward=True)

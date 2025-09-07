@@ -27,3 +27,6 @@ data
 # log
 *.log
 logs
+
+# secrets
+.env

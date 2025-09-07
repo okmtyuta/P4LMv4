@@ -1,3 +1,7 @@
+"""
+先頭/中央/末尾の3区間平均を連結する非学習 Aggregator。
+"""
+
 import torch
 
 from src.modules.data_process.data_process import DataProcess
@@ -5,17 +9,7 @@ from src.modules.protein.protein import Protein
 
 
 class EndsSegmentMeanAggregator(DataProcess):
-    """先頭N・中央・末尾M の平均を連結して返す非学習Aggregator。
-
-    - 入力: processed (L, D)
-    - 出力: (3D,) = [mean_head, mean_center, mean_tail] の連結
-    - パラメータ: head_len, tail_len は固定整数（学習なし）
-
-    仕様:
-    - L が短い場合でも安全に動作するよう、区間は重複しないように切り出す。
-      具体的には、先に先頭 head_len を確保し、残りから末尾 tail_len を確保する。
-      残差が中央区間となる（長さ0の区間はゼロベクトル平均とみなす）。
-    """
+    """先頭N・中央・末尾M の平均を連結して返す非学習 Aggregator。"""
 
     def __init__(self, head_len: int, tail_len: int) -> None:
         if head_len < 0 or tail_len < 0:
@@ -28,6 +22,7 @@ class EndsSegmentMeanAggregator(DataProcess):
         return 3
 
     def _safe_mean(self, x: torch.Tensor) -> torch.Tensor:
+        """安全な平均（長さ0ならゼロベクトル）。"""
         # x: (len, D) or (0, D)
         if x.numel() == 0:
             # 形だけ整えるゼロベクトルを返す
@@ -35,6 +30,7 @@ class EndsSegmentMeanAggregator(DataProcess):
         return torch.mean(x, dim=0)
 
     def _act(self, protein: Protein) -> Protein:
+        """3 区間の平均を計算して (3D,) に連結。"""
         data = protein.get_processed()  # (L, D)
         L, D = data.shape
 

@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict, List, Type
 
 from src.main.extraction import ExtractionRunner, ExtractionRunnerConfig
+from src.main.training import TrainingRunner, TrainingRunnerConfig
 from src.main.utils.runner import Runner, RunnerConfig
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ class Manager:
         # デフォルトのマッピングを設定
         self._runner_registry: Dict[Type[RunnerConfig], Type[Runner]] = {
             ExtractionRunnerConfig: ExtractionRunner,
+            TrainingRunnerConfig: TrainingRunner,
         }
 
     def _create_runner(self, config: RunnerConfig) -> Runner:
